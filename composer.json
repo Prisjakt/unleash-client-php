@@ -11,6 +11,10 @@
         {
             "name": "Johan Liljegren",
             "email": "johan.liljegren@prisjakt.nu"
+        },
+        {
+            "name": "Prisjakt Sverige AB",
+            "email": "dev@prisjakt.nu"
         }
     ],
     "scripts": {
