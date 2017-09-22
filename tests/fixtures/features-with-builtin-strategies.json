@@ -1,0 +1,145 @@
+{
+  "version": 1,
+  "features": [
+    {
+      "name": "application-hostname",
+      "description": "Feature using applicationHostname strategy.",
+      "enabled": true,
+      "strategies": [
+        {
+          "name": "applicationHostname",
+          "parameters": {
+            "hostNames": "localhost,acme.tld,example.com"
+          }
+        }
+      ],
+      "createdAt": "2017-09-18T09:21:52.009Z",
+      "strategy": "applicationHostname",
+      "parameters": {
+        "hostNames": "localhost,acme.tld,example.com"
+      }
+    },
+    {
+      "name": "default-strategy",
+      "description": "Feature with default strategy",
+      "enabled": true,
+      "strategies": [
+        {
+          "name": "default",
+          "parameters": {}
+        }
+      ],
+      "createdAt": "2017-09-18T09:08:46.257Z",
+      "strategy": "default",
+      "parameters": {}
+    },
+    {
+      "name": "disabled-feature",
+      "description": "disabled feature, strategy is not important.",
+      "enabled": false,
+      "strategies": [
+        {
+          "name": "default",
+          "parameters": {}
+        }
+      ],
+      "createdAt": "2017-09-18T09:08:14.779Z",
+      "strategy": "default",
+      "parameters": {}
+    },
+    {
+      "name": "gradual-rollout-random",
+      "description": "Feature using gradualRolloutRandom strategy.",
+      "enabled": true,
+      "strategies": [
+        {
+          "name": "gradualRolloutRandom",
+          "parameters": {
+            "percentage": 50
+          }
+        }
+      ],
+      "createdAt": "2017-09-18T09:19:52.473Z",
+      "strategy": "gradualRolloutRandom",
+      "parameters": {
+        "percentage": 50
+      }
+    },
+    {
+      "name": "gradual-rollout-session-id",
+      "description": "Feature using gradualRolloutSessionId strategy",
+      "enabled": true,
+      "strategies": [
+        {
+          "name": "gradualRolloutSessionId",
+          "parameters": {
+            "percentage": 50,
+            "groupId": "all"
+          }
+        }
+      ],
+      "createdAt": "2017-09-18T09:32:37.639Z",
+      "strategy": "gradualRolloutSessionId",
+      "parameters": {
+        "percentage": 50,
+        "groupId": "all"
+      }
+    },
+    {
+      "name": "gradual-rollout-user-id",
+      "description": "Feature with gradualRolloutUserId strategy.",
+      "enabled": true,
+      "strategies": [
+        {
+          "name": "gradualRolloutUserId",
+          "parameters": {
+            "percentage": 50,
+            "groupId": "all"
+          }
+        }
+      ],
+      "createdAt": "2017-09-18T09:19:09.453Z",
+      "strategy": "gradualRolloutUserId",
+      "parameters": {
+        "percentage": 50,
+        "groupId": "all"
+      }
+    },
+    {
+      "name": "remote-address",
+      "description": "Feature using remoteAddress strategy.",
+      "enabled": true,
+      "strategies": [
+        {
+          "name": "remoteAddress",
+          "parameters": {
+            "IPs": "127.0.0.1"
+          }
+        }
+      ],
+      "createdAt": "2017-09-18T09:20:51.194Z",
+      "strategy": "remoteAddress",
+      "parameters": {
+        "IPs": "127.0.0.1"
+      }
+    },
+    {
+      "name": "user-with-id",
+      "description": "Feature using userWithId strategy.",
+      "enabled": true,
+      "strategies": [
+        {
+          "name": "userWithId",
+          "parameters": {
+            "userIds": "1,2,3,4,5,10,20,30,40,50"
+          }
+        }
+      ],
+      "createdAt": "2017-09-18T09:09:36.203Z",
+      "strategy": "userWithId",
+      "parameters": {
+        "userIds": "1,2,3,4,5,10,20,30,40,50"
+      }
+    }
+  ]
+}
