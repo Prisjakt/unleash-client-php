@@ -1,0 +1,10 @@
+<phpunit
+    bootstrap="tests/bootstrap.php"
+    colors="always"
+>
+    <testsuites>
+        <testsuite>
+            <directory>tests</directory>
+        </testsuite>
+    </testsuites>
+</phpunit>
