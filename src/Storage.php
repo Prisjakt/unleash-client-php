@@ -2,10 +2,6 @@
 
 namespace Prisjakt\Unleash;
 
-// Handles cache (if any)
-// Handles file backup
-// Holds features (passed in from ->reset or loaded from cache/backup
-// config needed: cacheinterface (optional), filesystem (optional)
 use League\Flysystem\Adapter\Local;
 use League\Flysystem\Filesystem;
 use League\Flysystem\FilesystemInterface;
@@ -24,6 +20,7 @@ class Storage
     private $features;
     private $lastUpdated;
     private $eTag;
+    private $hasData;
 
     public function __construct(
         string $appName,
@@ -31,6 +28,7 @@ class Storage
         CacheItemPoolInterface $cachePool = null
     ) {
         $this->lastUpdated = 0;
+        $this->features = [];
 
         if (is_null($filesystem)) {
             $filesystem = new Filesystem(new Local(sys_get_temp_dir()));
@@ -45,8 +43,7 @@ class Storage
         }
 
         $this->saveKey = "unleash-repo-v1-" . str_replace('[/\\]', '_', $appName);
-
-        $this->load();
+        $this->hasData = $this->load();
     }
 
     public function has(string $key): bool
@@ -62,16 +59,17 @@ class Storage
         return $this->features[$key];
     }
 
-    public function reset(array $data, $eTag = null)
+    public function reset(array $data, string $eTag = null)
     {
         foreach ($data as $featureData) {
             // TODO: maybe we want to lazily instantiate features in the future?
-            // TODO: (I could imaging a neat performance boost if the server has a lot of features.)
+            // TODO: (I could imagine a neat performance boost if the server has a lot of features.)
             $feature = Feature::fromArray($featureData);
             $this->features[$feature->getName()] = $feature;
         }
         $this->lastUpdated = time();
         $this->eTag = $eTag;
+        $this->hasData = true;
 
         $this->save();
     }
@@ -90,6 +88,11 @@ class Storage
     public function getETag(): string
     {
         return $this->eTag ?? "";
+    }
+
+    public function hasData(): bool
+    {
+        return $this->hasData;
     }
 
     private function save(): self
@@ -129,9 +132,10 @@ class Storage
     private function load()
     {
         if ($this->loadfromCache()) {
-            return;
+            return true;
         }
-        $this->loadFromBackup();
+
+        return $this->loadFromBackup();
     }
 
     private function loadFromCache(): bool
@@ -155,7 +159,6 @@ class Storage
         if (!$this->filesystem->has($this->saveKey)) {
             return false;
         }
-
         $data = Json::decode($this->filesystem->read($this->saveKey), true);
         $this->setData($data);
 
