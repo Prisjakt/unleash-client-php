@@ -3,6 +3,7 @@
 namespace Prisjakt\Unleash\Tests;
 
 use Cache\Adapter\PHPArray\ArrayCachePool;
+use League\Flysystem\Adapter\NullAdapter;
 use League\Flysystem\Filesystem;
 use League\Flysystem\Memory\MemoryAdapter;
 use PHPUnit\Framework\TestCase;
@@ -71,7 +72,7 @@ class StorageTest extends TestCase
         ];
 
         // begin with populating the cache.
-        $storage = new Storage($this->appName, null, $cachePool);
+        $storage = new Storage($this->appName, new Filesystem(new NullAdapter()), $cachePool);
         $storage->reset($data);
         $this->assertTrue($storage->has($featureName));
 
@@ -118,7 +119,7 @@ class StorageTest extends TestCase
             ],
         ];
 
-        $storage = new Storage($this->appName);
+        $storage = new Storage($this->appName, new Filesystem(new NullAdapter()));
         $storage->reset($data);
         $this->assertTrue($storage->has($featureName));
 
@@ -127,8 +128,53 @@ class StorageTest extends TestCase
 
     public function testGetNonExistingFeature()
     {
-        $storage = new Storage($this->appName);
+        $storage = new Storage($this->appName, new Filesystem(new NullAdapter()));
         $this->expectException(NoSuchFeatureException::class);
         $storage->get("Surely this cannot exist? No it can't.. And don't call med Shirley");
+    }
+
+    public function testGetLastUpdated()
+    {
+        $data = [
+            [
+                "name" => "feature",
+                "description" => "description",
+                "enabled" => true,
+                "strategies" => [["name" => "default", "parameters" => []]],
+                "createdAt" => time(),
+            ],
+        ];
+
+        $storage = new Storage($this->appName, new Filesystem(new NullAdapter()));
+        $beforeReset = time();
+        $storage->reset($data);
+        $afterReset = time();
+        $this->assertGreaterThanOrEqual($afterReset, $storage->getLastUpdated());
+        $this->assertLessThanOrEqual($beforeReset, $storage->getLastUpdated());
+    }
+
+
+    public function testGetLastUpdatedFromCache()
+    {
+        $cachePool = new ArrayCachePool();
+        $data = [
+            [
+                "name" => "feature",
+                "description" => "description",
+                "enabled" => true,
+                "strategies" => [["name" => "default", "parameters" => []]],
+                "createdAt" => time(),
+            ],
+        ];
+
+        $storage = new Storage($this->appName, new Filesystem(new NullAdapter()), $cachePool);
+        $beforeReset = time();
+        $storage->reset($data);
+        $afterReset = time();
+
+
+        $backedUpStorage = new Storage($this->appName, null, $cachePool);
+        $this->assertGreaterThanOrEqual($afterReset, $backedUpStorage->getLastUpdated());
+        $this->assertLessThanOrEqual($beforeReset, $backedUpStorage->getLastUpdated());
     }
 }

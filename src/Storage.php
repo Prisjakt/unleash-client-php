@@ -11,6 +11,7 @@ use League\Flysystem\Filesystem;
 use League\Flysystem\FilesystemInterface;
 use Prisjakt\Unleash\Exception\NoSuchFeatureException;
 use Prisjakt\Unleash\Feature\Feature;
+use Prisjakt\Unleash\Helpers\Json;
 use Psr\Cache\CacheItemPoolInterface;
 
 class Storage
@@ -21,6 +22,7 @@ class Storage
     private $saveKey;
 
     private $features;
+    private $lastUpdated;
 
     public function __construct(
         string $appName,
@@ -67,30 +69,37 @@ class Storage
             $this->features[$feature->getName()] = $feature;
         }
 
+        $this->lastUpdated = time();
+
         $this->save();
     }
 
     private function save(): self
     {
-        $data = \serialize($this->features);
+        $data = [
+            "lastUpdate" => $this->lastUpdated,
+            "features" => \serialize($this->features),
+        ];
         $this->saveToCache($data);
         $this->saveToBackup($data);
 
         return $this;
     }
 
-    private function saveToCache(string $data)
+    private function saveToCache(array $data)
     {
         if (!$this->useCache) {
             return;
         }
+
         $cacheItem = $this->cachePool->getItem($this->saveKey);
         $cacheItem->set($data);
         $this->cachePool->save($cacheItem);
     }
 
-    private function saveToBackup(string $data)
+    private function saveToBackup(array $data)
     {
+        $data = Json::encode($data);
         if ($this->filesystem->has($this->saveKey)) {
             $this->filesystem->update($this->saveKey, $data);
         } else {
@@ -112,9 +121,13 @@ class Storage
             return false;
         }
         $cacheItem = $this->cachePool->getItem($this->saveKey);
-        if ($cacheItem->isHit()) {
-            $this->features = \unserialize($cacheItem->get());
+        if (!$cacheItem->isHit()) {
+            return false;
         }
+
+        $data = $cacheItem->get();
+        $this->features = \unserialize($data["features"]);
+        $this->lastUpdated = $data["lastUpdate"];
 
         return true;
     }
@@ -122,8 +135,18 @@ class Storage
     private function loadFromBackup()
     {
         if (!$this->filesystem->has($this->saveKey)) {
-            return;
+            return false;
         }
-        $this->features = \unserialize($this->filesystem->read($this->saveKey));
+
+        $data = Json::decode($this->filesystem->read($this->saveKey), true);
+        $this->features = \unserialize($data["features"]);
+        $this->lastUpdated = $data["lastUpdate"];
+
+        return true;
+    }
+
+    public function getLastUpdated()
+    {
+        return $this->lastUpdated;
     }
 }
