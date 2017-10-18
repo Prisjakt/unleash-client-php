@@ -197,4 +197,11 @@ class StorageTest extends TestCase
 
         $this->assertEquals($eTag, $storage->getETag());
     }
+
+    public function testResetUpdated()
+    {
+        $storage = new Storage($this->appName, new Filesystem(new NullAdapter()));
+        $storage->resetLastUpdated();
+        $this->assertNotEquals(0, $storage->getLastUpdated());
+    }
 }

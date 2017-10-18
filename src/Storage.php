@@ -30,6 +30,7 @@ class Storage
         FilesystemInterface $filesystem = null,
         CacheItemPoolInterface $cachePool = null
     ) {
+        $this->lastUpdated = 0;
 
         if (is_null($filesystem)) {
             $filesystem = new Filesystem(new Local(sys_get_temp_dir()));
@@ -69,7 +70,6 @@ class Storage
             $feature = Feature::fromArray($featureData);
             $this->features[$feature->getName()] = $feature;
         }
-
         $this->lastUpdated = time();
         $this->eTag = $eTag;
 
@@ -79,6 +79,12 @@ class Storage
     public function getLastUpdated(): int
     {
         return $this->lastUpdated;
+    }
+
+    public function resetLastUpdated()
+    {
+        $this->lastUpdated = time();
+        $this->save();
     }
 
     public function getETag(): string
