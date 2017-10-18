@@ -23,6 +23,7 @@ class Storage
 
     private $features;
     private $lastUpdated;
+    private $eTag;
 
     public function __construct(
         string $appName,
@@ -60,7 +61,7 @@ class Storage
         return $this->features[$key];
     }
 
-    public function reset(array $data)
+    public function reset(array $data, $eTag = null)
     {
         foreach ($data as $featureData) {
             // TODO: maybe we want to lazily instantiate features in the future?
@@ -70,13 +71,25 @@ class Storage
         }
 
         $this->lastUpdated = time();
+        $this->eTag = $eTag;
 
         $this->save();
+    }
+
+    public function getLastUpdated(): int
+    {
+        return $this->lastUpdated;
+    }
+
+    public function getETag(): string
+    {
+        return $this->eTag ?? "";
     }
 
     private function save(): self
     {
         $data = [
+            "eTag" => $this->eTag,
             "lastUpdate" => $this->lastUpdated,
             "features" => \serialize($this->features),
         ];
@@ -115,7 +128,7 @@ class Storage
         $this->loadFromBackup();
     }
 
-    private function loadFromCache()
+    private function loadFromCache(): bool
     {
         if (!$this->useCache) {
             return false;
@@ -126,27 +139,27 @@ class Storage
         }
 
         $data = $cacheItem->get();
-        $this->features = \unserialize($data["features"]);
-        $this->lastUpdated = $data["lastUpdate"];
+        $this->setData($data);
 
         return true;
     }
 
-    private function loadFromBackup()
+    private function loadFromBackup(): bool
     {
         if (!$this->filesystem->has($this->saveKey)) {
             return false;
         }
 
         $data = Json::decode($this->filesystem->read($this->saveKey), true);
-        $this->features = \unserialize($data["features"]);
-        $this->lastUpdated = $data["lastUpdate"];
+        $this->setData($data);
 
         return true;
     }
 
-    public function getLastUpdated()
+    private function setData(array $data)
     {
-        return $this->lastUpdated;
+        $this->features = \unserialize($data["features"]);
+        $this->lastUpdated = $data["lastUpdate"];
+        $this->eTag = $data["eTag"];
     }
 }

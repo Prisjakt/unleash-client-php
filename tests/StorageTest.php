@@ -149,6 +149,7 @@ class StorageTest extends TestCase
         $beforeReset = time();
         $storage->reset($data);
         $afterReset = time();
+
         $this->assertGreaterThanOrEqual($afterReset, $storage->getLastUpdated());
         $this->assertLessThanOrEqual($beforeReset, $storage->getLastUpdated());
     }
@@ -176,5 +177,24 @@ class StorageTest extends TestCase
         $backedUpStorage = new Storage($this->appName, null, $cachePool);
         $this->assertGreaterThanOrEqual($afterReset, $backedUpStorage->getLastUpdated());
         $this->assertLessThanOrEqual($beforeReset, $backedUpStorage->getLastUpdated());
+    }
+
+    public function testCanSetEtagWhenResetting()
+    {
+        $eTag = "this is a super random string";
+        $data = [
+            [
+                "name" => "feature",
+                "description" => "description",
+                "enabled" => true,
+                "strategies" => [["name" => "default", "parameters" => []]],
+                "createdAt" => time(),
+            ],
+        ];
+
+        $storage = new Storage($this->appName, new Filesystem(new NullAdapter()));
+        $storage->reset($data, $eTag);
+
+        $this->assertEquals($eTag, $storage->getETag());
     }
 }
