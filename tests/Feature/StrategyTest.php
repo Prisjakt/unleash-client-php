@@ -5,7 +5,7 @@ namespace Prisjakt\Unleash\Tests\Feature;
 use PHPUnit\Framework\TestCase;
 use Prisjakt\Unleash\Feature\Strategy;
 
-class FeatureStrategyTest extends TestCase
+class StrategyTest extends TestCase
 {
     public function testFeatureStrategyHasName()
     {
