@@ -1,6 +1,6 @@
 <?php
 
-namespace Prisjakt\Unleash;
+namespace Prisjakt\Unleash\Strategy;
 
 interface StrategyInterface
 {
