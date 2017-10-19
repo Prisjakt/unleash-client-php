@@ -1,6 +1,6 @@
 <?php
 
-namespace Prisjakt\Unleash\Tests;
+namespace Prisjakt\Unleash\Tests\Feature;
 
 use PHPUnit\Framework\TestCase;
 use Prisjakt\Unleash\Feature\Strategy;
