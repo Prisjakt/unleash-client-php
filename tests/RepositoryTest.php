@@ -12,15 +12,12 @@ use PHPUnit\Framework\TestCase;
 use Prisjakt\Unleash\Feature\Feature;
 use Prisjakt\Unleash\Helpers\Json;
 use Prisjakt\Unleash\Repository;
+use Prisjakt\Unleash\Settings;
 use Prisjakt\Unleash\Storage;
 
 // TODO: should probably move the first repository in two-stage tests to a helper function.
 class RepositoryTest extends TestCase
 {
-    private $unleashHost = "dummy-host:4242";
-    private $appName = "Test";
-    private $instanceId = "Test:Id";
-
     public function testFetchDataFromServer()
     {
         $featuresData = $this->getFeaturesData();
@@ -28,9 +25,9 @@ class RepositoryTest extends TestCase
         $httpClient = new Client();
         $httpClient->addResponse(new Response(200, [], Json::encode($featuresData)));
 
-        $storage = new Storage($this->appName, new Filesystem(new NullAdapter()));
+        $storage = new Storage($this->getSettings()->getAppName(), new Filesystem(new NullAdapter()));
 
-        $repository = new Repository($this->unleashHost, $this->appName, $this->instanceId, $httpClient, $storage);
+        $repository = new Repository($this->getSettings(), $httpClient, $storage);
 
         $repository->fetch();
 
@@ -45,9 +42,9 @@ class RepositoryTest extends TestCase
         $httpClient = new Client();
         $httpClient->addResponse(new Response(200, [], Json::encode($featuresData)));
 
-        $storage = new Storage($this->appName, new Filesystem(new NullAdapter()));
+        $storage = new Storage($this->getSettings()->getAppName(), new Filesystem(new NullAdapter()));
 
-        $repository = new Repository($this->unleashHost, $this->appName, $this->instanceId, $httpClient, $storage);
+        $repository = new Repository($this->getSettings(), $httpClient, $storage);
 
         $repository->fetch();
         // Second pass. We should use cache now instead of asking the server.
@@ -65,9 +62,9 @@ class RepositoryTest extends TestCase
         $httpClient->addResponse(new Response(200, [], Json::encode($featuresData)));
         $httpClient->addResponse(new Response(200, [], Json::encode($featuresData)));
 
-        $storage = new Storage($this->appName, new Filesystem(new NullAdapter()));
+        $storage = new Storage($this->getSettings()->getAppName(), new Filesystem(new NullAdapter()));
 
-        $repository = new Repository($this->unleashHost, $this->appName, $this->instanceId, $httpClient, $storage, 0);
+        $repository = new Repository($this->getSettings(0), $httpClient, $storage);
 
         $repository->fetch();
         // Second pass. Since updateInterval is zero (0) the storage should immediately be considered stale.
@@ -87,21 +84,16 @@ class RepositoryTest extends TestCase
         $memoryFilesystem = new Filesystem(new MemoryAdapter());
 
         $repositoryFromServer = new Repository(
-            $this->unleashHost,
-            $this->appName,
-            $this->instanceId,
+            $this->getSettings(),
             $httpClient,
-            new Storage($this->appName, $memoryFilesystem)
+            new Storage($this->getSettings()->getAppName(), $memoryFilesystem)
         );
         $repositoryFromServer->fetch();
 
         $repositoryFromStorage = new Repository(
-            $this->unleashHost,
-            $this->appName,
-            $this->instanceId,
+            $this->getSettings(0),
             $httpClient,
-            new Storage($this->appName, $memoryFilesystem),
-            0
+            new Storage($this->getSettings()->getAppName(), $memoryFilesystem)
         );
         $httpClient->addException(new \Exception("Server is down or something..."));
         $repositoryFromStorage->fetch();
@@ -120,30 +112,25 @@ class RepositoryTest extends TestCase
         $httpClient = new Client();
         $httpClient->addResponse(new Response(200, [], Json::encode($featuresData)));
 
-        $storage = new Storage($this->appName, new Filesystem(new MemoryAdapter()));
+        $storage = new Storage($this->getSettings()->getAppName(), new Filesystem(new MemoryAdapter()));
 
         $repositoryFromServer = new Repository(
-            $this->unleashHost,
-            $this->appName,
-            $this->instanceId,
+            $this->getSettings(),
             $httpClient,
             $storage
         );
         $repositoryFromServer->fetch();
 
-        $lockKey = "UPDATE_LOCK_{$this->appName}";
+        $lockKey = "UPDATE_LOCK_{$this->getSettings()->getAppName()}";
         $cachePool = new ArrayCachePool();
         $lockItem = $cachePool->getItem($lockKey);
         $lockItem->set(true);
         $cachePool->save($lockItem);
 
         $staleRepository = new Repository(
-            $this->unleashHost,
-            $this->appName,
-            $this->instanceId,
+            $this->getSettings(0),
             $httpClient,
             $storage,
-            0,
             $cachePool
         );
         $staleRepository->fetch();
@@ -167,8 +154,8 @@ class RepositoryTest extends TestCase
         ));
         $httpClient->addResponse(new Response(304, ["ETag" => "And that's all she wrote!"]));
 
-        $storage = new Storage($this->appName, new Filesystem(new NullAdapter()));
-        $repository = new Repository($this->unleashHost, $this->appName, $this->instanceId, $httpClient, $storage, 0);
+        $storage = new Storage($this->getSettings()->getAppName(), new Filesystem(new NullAdapter()));
+        $repository = new Repository($this->getSettings(0), $httpClient, $storage);
 
         $repository->fetch();
         $repository->fetch();
@@ -185,15 +172,12 @@ class RepositoryTest extends TestCase
 
         $httpClient->addResponse(new Response(200, [], Json::encode($featuresData)));
 
-        $storage = new Storage($this->appName, new Filesystem(new NullAdapter()));
+        $storage = new Storage($this->getSettings()->getAppName(), new Filesystem(new NullAdapter()));
 
         $repository = new Repository(
-            $this->unleashHost,
-            $this->appName,
-            $this->instanceId,
+            $this->getSettings(0),
             $httpClient,
             $storage,
-            0,
             $cachePool
         );
 
@@ -207,12 +191,10 @@ class RepositoryTest extends TestCase
         $httpClient = new Client();
         $httpClient->addResponse(new Response(500));
 
-        $storage = new Storage($this->appName, new Filesystem(new NullAdapter()));
+        $storage = new Storage($this->getSettings()->getAppName(), new Filesystem(new NullAdapter()));
 
         $repository = new Repository(
-            $this->unleashHost,
-            $this->appName,
-            $this->instanceId,
+            $this->getSettings(),
             $httpClient,
             $storage
         );
@@ -231,11 +213,9 @@ class RepositoryTest extends TestCase
         $memoryFilesystem = new Filesystem(new MemoryAdapter());
 
         $repositoryFromServer = new Repository(
-            $this->unleashHost,
-            $this->appName,
-            $this->instanceId,
+            $this->getSettings(),
             $httpClient,
-            new Storage($this->appName, $memoryFilesystem)
+            new Storage($this->getSettings()->getAppName(), $memoryFilesystem)
         );
         $repositoryFromServer->fetch();
 
@@ -244,12 +224,9 @@ class RepositoryTest extends TestCase
 
 
         $staleRepository = new Repository(
-            $this->unleashHost,
-            $this->appName,
-            $this->instanceId,
+            $this->getSettings(0),
             $httpClient,
-            new Storage($this->appName, $memoryFilesystem),
-            0
+            new Storage($this->getSettings()->getAppName(), $memoryFilesystem)
         );
 
         $staleRepository->fetch();
@@ -277,5 +254,10 @@ class RepositoryTest extends TestCase
                 ],
             ],
         ];
+    }
+
+    private function getSettings($updateInterval = Settings::DEFAULT_UPDATE_INTERVAL_SECONDS)
+    {
+        return new Settings("Test", "Test:Id", "localhost", $updateInterval);
     }
 }

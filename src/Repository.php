@@ -13,29 +13,22 @@ class Repository
     const ENDPOINT_FEATURES = "/api/features";
     const ENDPOINT_REGISTER = "/api/client/register";
 
-    private $unleashHost;
-    private $appName;
-    private $instanceId;
+    private $settings;
     private $httpClient;
     private $storage;
 
     private $useCache;
     private $cachePool;
-    private $updateInterval;
     private $updateLockKey;
 
     // TODO: move scalars to settings object?
     public function __construct(
-        string $unleashHost,
-        string $appName,
-        string $instanceId,
+        Settings $settings,
         HttpClient $httpClient,
         Storage $storage,
-        int $updateInterval = 15,
         CacheItemPoolInterface $cachePool = null
     ) {
-        $this->appName = $appName;
-        $this->instanceId = $instanceId;
+        $this->settings = $settings;
         $this->httpClient = $httpClient;
         $this->storage = $storage;
 
@@ -45,9 +38,7 @@ class Repository
             $this->useCache = true;
             $this->cachePool = $cachePool;
         }
-        $this->unleashHost = $unleashHost;
-        $this->updateInterval = $updateInterval;
-        $this->updateLockKey = "UPDATE_LOCK_{$this->appName}";
+        $this->updateLockKey = "UPDATE_LOCK_{$this->settings->getAppName()}";
     }
 
     public function fetch()
@@ -65,12 +56,12 @@ class Repository
         $eTag = $this->storage->getETag() ?? "";
         $request = new Request(
             "get",
-            $this->unleashHost . self::ENDPOINT_FEATURES,
+            $this->settings->getUnleashHost() . self::ENDPOINT_FEATURES,
             [
                 "If-None-Match" => $eTag,
                 "Content-Type" => "Application/Json",
-                "UNLEASH-APPNAME" => $this->appName,
-                "UNLEASH-INSTANCEID" => $this->instanceId,
+                "UNLEASH-APPNAME" => $this->settings->getAppName(),
+                "UNLEASH-INSTANCEID" => $this->settings->getInstanceId(),
             ]
         );
 
@@ -95,7 +86,8 @@ class Repository
             return;
         }
 
-        $data = Json::decode($response->getBody()->getContents(), true);
+        $json = $response->getBody()->getContents();
+        $data = Json::decode($json, true);
         $this->storage->reset($data["features"], $eTag);
         $this->releaseUpdateLock();
     }
@@ -149,7 +141,7 @@ class Repository
 
     private function isStorageFresh(): bool
     {
-        return $this->storage->getLastUpdated() > (time() - $this->updateInterval);
+        return $this->storage->getLastUpdated() > (time() - $this->settings->getUpdateInterval());
     }
 
     private function ignoreOrFail()
