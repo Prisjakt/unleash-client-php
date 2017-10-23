@@ -56,16 +56,17 @@ class Storage
         if (!$this->has($key)) {
             throw new NoSuchFeatureException("Feature '{$key}' not found.");
         }
+
+        if (!($this->features[$key] instanceof Feature)) {
+            $this->features[$key] = Feature::fromArray($this->features[$key]);
+        }
         return $this->features[$key];
     }
 
     public function reset(array $data, string $eTag = null)
     {
         foreach ($data as $featureData) {
-            // TODO: maybe we want to lazily instantiate features in the future?
-            // TODO: (I could imagine a neat performance boost if the server has a lot of features.)
-            $feature = Feature::fromArray($featureData);
-            $this->features[$feature->getName()] = $feature;
+            $this->features[$featureData["name"]] = $featureData;
         }
         $this->lastUpdated = time();
         $this->eTag = $eTag;
