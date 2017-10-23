@@ -21,8 +21,9 @@ class Processor
         /** @var Strategy $featureStrategy */
         foreach ($feature->getStrategies() as $featureStrategy) {
             if (!$this->repository->has($featureStrategy->getName())) {
-                continue; // TODO: should we just continue? log? throw?
+                return false; // TODO: should we just return? log? throw?
             }
+
             $strategy = $this->repository->get($featureStrategy->getName());
             if ($strategy->isEnabled($featureStrategy->getParameters(), $context)) {
                 return true;

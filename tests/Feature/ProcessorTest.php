@@ -11,7 +11,7 @@ use Prophecy\Argument\Token\AnyValueToken;
 
 class ProcessorTest extends TestCase
 {
-    public function testUnsupportedStrategyReturnsFallbackValue()
+    public function testUnsupportedStrategyReturnsFalse()
     {
         $strategyRepository = new Repository();
 
@@ -30,7 +30,7 @@ class ProcessorTest extends TestCase
 
         $featureProcessor = new Processor($strategyRepository);
 
-        $this->assertTrue($featureProcessor->process($feature, [], true));
+        $this->assertFalse($featureProcessor->process($feature, [], true));
         $this->assertFalse($featureProcessor->process($feature, [], false));
     }
 
