@@ -18,15 +18,7 @@ class StorageTest extends TestCase
     {
         $filesystem = new Filesystem(new MemoryAdapter());
 
-        $data = [
-            [
-                "name" => "feature",
-                "description" => "description",
-                "enabled" => true,
-                "strategies" => [["name" => "default", "parameters" => []]],
-                "createdAt" => time(),
-            ],
-        ];
+        $data = $this->getFeaturesData();
 
         $storage = new Storage($this->appName, $filesystem);
         $storage->reset($data);
@@ -38,15 +30,7 @@ class StorageTest extends TestCase
     {
         $filesystem = new Filesystem(new MemoryAdapter());
 
-        $data = [
-            [
-                "name" => "feature",
-                "description" => "description",
-                "enabled" => true,
-                "strategies" => [["name" => "default", "parameters" => []]],
-                "createdAt" => time(),
-            ],
-        ];
+        $data = $this->getFeaturesData();
 
         $storage = new Storage($this->appName, $filesystem);
         $storage->reset($data);
@@ -135,15 +119,7 @@ class StorageTest extends TestCase
 
     public function testGetLastUpdated()
     {
-        $data = [
-            [
-                "name" => "feature",
-                "description" => "description",
-                "enabled" => true,
-                "strategies" => [["name" => "default", "parameters" => []]],
-                "createdAt" => time(),
-            ],
-        ];
+        $data = $this->getFeaturesData();
 
         $storage = new Storage($this->appName, new Filesystem(new NullAdapter()));
         $beforeReset = microtime(true);
@@ -154,24 +130,15 @@ class StorageTest extends TestCase
         $this->assertLessThanOrEqual($afterReset, $storage->getLastUpdated());
     }
 
-
     public function testGetLastUpdatedFromCache()
     {
         $cachePool = new ArrayCachePool();
-        $data = [
-            [
-                "name" => "feature",
-                "description" => "description",
-                "enabled" => true,
-                "strategies" => [["name" => "default", "parameters" => []]],
-                "createdAt" => time(),
-            ],
-        ];
+        $data = $this->getFeaturesData();
 
         $storage = new Storage($this->appName, new Filesystem(new NullAdapter()), $cachePool);
         $beforeReset = microtime(true);
         $storage->reset($data);
-        $afterReset = time();
+        $afterReset = microtime(true);
 
 
         $backedUpStorage = new Storage($this->appName, null, $cachePool);
@@ -183,15 +150,7 @@ class StorageTest extends TestCase
     public function testCanSetETagWhenResetting()
     {
         $eTag = "this is a super random string";
-        $data = [
-            [
-                "name" => "feature",
-                "description" => "description",
-                "enabled" => true,
-                "strategies" => [["name" => "default", "parameters" => []]],
-                "createdAt" => time(),
-            ],
-        ];
+        $data = $this->getFeaturesData();
 
         $storage = new Storage($this->appName, new Filesystem(new NullAdapter()));
         $storage->reset($data, $eTag);
@@ -211,15 +170,7 @@ class StorageTest extends TestCase
     {
         $filesystem = new Filesystem(new MemoryAdapter());
 
-        $data = [
-            [
-                "name" => "feature",
-                "description" => "description",
-                "enabled" => true,
-                "strategies" => [["name" => "default", "parameters" => []]],
-                "createdAt" => time(),
-            ],
-        ];
+        $data = $this->getFeaturesData();
 
         $storage = new Storage($this->appName, $filesystem);
         $this->assertFalse($storage->hasData());
@@ -233,6 +184,23 @@ class StorageTest extends TestCase
 
         $this->assertTrue($backedUpStorage->hasData());
         $this->assertTrue($backedUpStorage->has("feature"));
+    }
+
+    /**
+     * @return array
+     */
+    private function getFeaturesData(): array
+    {
+        $data = [
+            [
+                "name" => "feature",
+                "description" => "description",
+                "enabled" => true,
+                "strategies" => [["name" => "default", "parameters" => []]],
+                "createdAt" => time(),
+            ],
+        ];
+        return $data;
     }
 
 
