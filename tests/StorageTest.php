@@ -146,12 +146,12 @@ class StorageTest extends TestCase
         ];
 
         $storage = new Storage($this->appName, new Filesystem(new NullAdapter()));
-        $beforeReset = time();
+        $beforeReset = microtime(true);
         $storage->reset($data);
-        $afterReset = time();
+        $afterReset = microtime(true);
 
-        $this->assertGreaterThanOrEqual($afterReset, $storage->getLastUpdated());
-        $this->assertLessThanOrEqual($beforeReset, $storage->getLastUpdated());
+        $this->assertGreaterThanOrEqual($beforeReset, $storage->getLastUpdated());
+        $this->assertLessThanOrEqual($afterReset, $storage->getLastUpdated());
     }
 
 
@@ -169,14 +169,15 @@ class StorageTest extends TestCase
         ];
 
         $storage = new Storage($this->appName, new Filesystem(new NullAdapter()), $cachePool);
-        $beforeReset = time();
+        $beforeReset = microtime(true);
         $storage->reset($data);
         $afterReset = time();
 
 
         $backedUpStorage = new Storage($this->appName, null, $cachePool);
-        $this->assertGreaterThanOrEqual($afterReset, $backedUpStorage->getLastUpdated());
-        $this->assertLessThanOrEqual($beforeReset, $backedUpStorage->getLastUpdated());
+
+        $this->assertGreaterThanOrEqual($beforeReset, $backedUpStorage->getLastUpdated());
+        $this->assertLessThanOrEqual($afterReset, $backedUpStorage->getLastUpdated());
     }
 
     public function testCanSetETagWhenResetting()

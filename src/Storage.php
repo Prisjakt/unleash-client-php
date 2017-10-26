@@ -63,26 +63,28 @@ class Storage
         return $this->features[$key];
     }
 
-    public function reset(array $data, string $eTag = null)
+    public function reset(array $featuresData, string $eTag = null)
     {
-        foreach ($data as $featureData) {
+        foreach ($featuresData as $featureData) {
             $this->features[$featureData["name"]] = $featureData;
         }
-        $this->lastUpdated = time();
+        $this->lastUpdated = microtime(true);
         $this->eTag = $eTag;
         $this->hasData = true;
 
         $this->save();
+
+        return $this->lastUpdated;
     }
 
-    public function getLastUpdated(): int
+    public function getLastUpdated(): float
     {
         return $this->lastUpdated;
     }
 
     public function resetLastUpdated()
     {
-        $this->lastUpdated = time();
+        $this->lastUpdated = microtime(true);
         $this->save();
     }
 
