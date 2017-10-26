@@ -6,6 +6,7 @@ use GuzzleHttp\Psr7\Request;
 use Http\Client\HttpClient;
 use Prisjakt\Unleash\Feature\Feature;
 use Prisjakt\Unleash\Helpers\Json;
+use Prisjakt\Unleash\Storage\StorageInterface;
 use Psr\Cache\CacheItemPoolInterface;
 
 class Repository
@@ -24,7 +25,7 @@ class Repository
     // TODO: move scalars to settings object?
     public function __construct(
         Settings $settings,
-        Storage $storage,
+        StorageInterface $storage,
         HttpClient $httpClient = null,
         CacheItemPoolInterface $cachePool = null
     ) {
@@ -37,6 +38,12 @@ class Repository
         }
         $this->httpClient = $httpClient;
         $this->storage = $storage;
+        try {
+            $this->storage->load();
+        } catch (\Exception $e) {
+            // pass
+        }
+
 
         if (is_null($cachePool)) {
             $this->useCache = false;
@@ -61,7 +68,7 @@ class Repository
         // TODO: If long running processes become a common thing we should reconsider adding the cache reload solution.
 
         if (!$this->settings->shouldRefreshFromServerIfStale()) {
-            if (!$this->storage->hasData()) {
+            if (!$this->storage->isHit()) {
                 throw new \Exception("No data in cache and server refresh is disabled");
             }
             return;
@@ -97,6 +104,7 @@ class Repository
         if ($statusCode === 304) {
             if ($this->storage->getETag() === $eTag) {
                 $this->storage->resetLastUpdated();
+                $this->storage->save();
                 return;
             }
         }
@@ -109,6 +117,7 @@ class Repository
         $json = $response->getBody()->getContents();
         $data = Json::decode($json, true);
         $this->storage->reset($data["features"], $eTag);
+        $this->storage->save();
         $this->releaseUpdateLock();
     }
 
@@ -166,7 +175,7 @@ class Repository
 
     private function ignoreOrFail()
     {
-        if ($this->storage->hasData()) {
+        if ($this->storage->isHit()) {
             return;
         }
         throw new \Exception("Could not load data from anywhere (server, backup (or cache))");

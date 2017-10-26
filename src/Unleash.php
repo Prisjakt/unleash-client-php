@@ -9,6 +9,8 @@ use Prisjakt\Unleash\Feature\Processor;
 use Prisjakt\Unleash\Helpers\Json;
 use Prisjakt\Unleash\Strategy;
 use Psr\Cache\CacheItemPoolInterface;
+use Prisjakt\Unleash\Storage\BackupStorage;
+use Prisjakt\Unleash\Storage\CachedStorage;
 
 // TODO: add (optional) logging? (e.g. if feature does not exist/strategy not implemented/cant connect to server)
 class Unleash
@@ -33,9 +35,15 @@ class Unleash
         $strategyRepository = new Strategy\Repository($strategies);
         $this->featureProcessor = new Processor($strategyRepository);
 
+        $storage = new BackupStorage($settings->getAppName(), $filesystem);
+
+        if ($cacheItemPool !== null) {
+            $storage = new CachedStorage($settings->getAppName(), $cacheItemPool, $storage);
+        }
+
         $this->repository = new Repository(
             $settings,
-            new Storage($settings->getAppName(), $filesystem, $cacheItemPool),
+            $storage,
             $httpClient,
             $cacheItemPool
         );

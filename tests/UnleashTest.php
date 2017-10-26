@@ -2,6 +2,7 @@
 
 namespace Prisjakt\Unleash\Tests;
 
+use Cache\Adapter\PHPArray\ArrayCachePool;
 use GuzzleHttp\Psr7\Response;
 use Http\Mock\Client;
 use League\Flysystem\Adapter\NullAdapter;
@@ -22,7 +23,7 @@ class UnleashTest extends TestCase
         $httpClient = new Client();
         $filesystem = new Filesystem(new NullAdapter());
 
-        new Unleash($settings, $strategies, $httpClient, $filesystem);
+        new Unleash($settings, $strategies, $httpClient, $filesystem, new ArrayCachePool());
 
         // TODO: probably a bit too basic. Check request headers,content too.
         $this->assertEquals(0, count($httpClient->getRequests()));

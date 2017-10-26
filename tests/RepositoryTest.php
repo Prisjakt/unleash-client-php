@@ -13,13 +13,13 @@ use Prisjakt\Unleash\Feature\Feature;
 use Prisjakt\Unleash\Helpers\Json;
 use Prisjakt\Unleash\Repository;
 use Prisjakt\Unleash\Settings;
-use Prisjakt\Unleash\Storage;
+use Prisjakt\Unleash\Storage\BackupStorage;
 
 class RepositoryTest extends TestCase
 {
     public function testTryingToUseServerFetchWithoutHttpClientThrows()
     {
-        $storage = new Storage($this->getSettings()->getAppName(), new Filesystem(new NullAdapter()));
+        $storage = new BackupStorage($this->getSettings()->getAppName(), new Filesystem(new NullAdapter()));
 
         $this->expectException(\InvalidArgumentException::class);
         new Repository($this->getSettings(), $storage);
@@ -32,7 +32,7 @@ class RepositoryTest extends TestCase
         $httpClient = new Client();
         $httpClient->addResponse(new Response(200, [], Json::encode($featuresData)));
 
-        $storage = new Storage($this->getSettings()->getAppName(), new Filesystem(new NullAdapter()));
+        $storage = new BackupStorage($this->getSettings()->getAppName(), new Filesystem(new NullAdapter()));
 
         $repository = new Repository($this->getSettings(), $storage, $httpClient);
 
@@ -49,7 +49,7 @@ class RepositoryTest extends TestCase
         $httpClient = new Client();
         $httpClient->addResponse(new Response(200, [], Json::encode($featuresData)));
 
-        $storage = new Storage($this->getSettings()->getAppName(), new Filesystem(new NullAdapter()));
+        $storage = new BackupStorage($this->getSettings()->getAppName(), new Filesystem(new NullAdapter()));
 
         $repository = new Repository($this->getSettings(), $storage, $httpClient);
 
@@ -69,7 +69,7 @@ class RepositoryTest extends TestCase
         $httpClient->addResponse(new Response(200, [], Json::encode($featuresData)));
         $httpClient->addResponse(new Response(200, [], Json::encode($featuresData)));
 
-        $storage = new Storage($this->getSettings()->getAppName(), new Filesystem(new NullAdapter()));
+        $storage = new BackupStorage($this->getSettings()->getAppName(), new Filesystem(new NullAdapter()));
 
         $repository = new Repository($this->getSettings(0), $storage, $httpClient);
 
@@ -92,14 +92,14 @@ class RepositoryTest extends TestCase
 
         $repositoryFromServer = new Repository(
             $this->getSettings(),
-            new Storage($this->getSettings()->getAppName(), $memoryFilesystem),
+            new BackupStorage($this->getSettings()->getAppName(), $memoryFilesystem),
             $httpClient
         );
         $repositoryFromServer->fetch();
 
         $repositoryFromStorage = new Repository(
             $this->getSettings(0),
-            new Storage($this->getSettings()->getAppName(), $memoryFilesystem),
+            new BackupStorage($this->getSettings()->getAppName(), $memoryFilesystem),
             $httpClient
         );
         $httpClient->addException(new \Exception("Server is down or something..."));
@@ -123,7 +123,7 @@ class RepositoryTest extends TestCase
 
         $repositoryFromServer = new Repository(
             $this->getSettings(),
-            new Storage($this->getSettings()->getAppName(), $memoryFilesystem),
+            new BackupStorage($this->getSettings()->getAppName(), $memoryFilesystem),
             $httpClient
         );
         $repositoryFromServer->fetch();
@@ -132,7 +132,7 @@ class RepositoryTest extends TestCase
         $settings2->setRefreshFromServerIfStale(false);
         $repositoryFromStorage = new Repository(
             $settings2,
-            new Storage($this->getSettings()->getAppName(), $memoryFilesystem),
+            new BackupStorage($this->getSettings()->getAppName(), $memoryFilesystem),
             $httpClient
         );
         $httpClient->addException(new \Exception("Server is down or something..."));
@@ -152,7 +152,7 @@ class RepositoryTest extends TestCase
         $settings->setRefreshFromServerIfStale(false);
         $repositoryFromStorage = new Repository(
             $settings,
-            new Storage($this->getSettings()->getAppName(), new Filesystem(new NullAdapter()))
+            new BackupStorage($this->getSettings()->getAppName(), new Filesystem(new NullAdapter()))
         );
 
         $this->expectException(\Exception::class);
@@ -166,7 +166,7 @@ class RepositoryTest extends TestCase
         $httpClient = new Client();
         $httpClient->addResponse(new Response(200, [], Json::encode($featuresData)));
 
-        $storage = new Storage($this->getSettings()->getAppName(), new Filesystem(new MemoryAdapter()));
+        $storage = new BackupStorage($this->getSettings()->getAppName(), new Filesystem(new MemoryAdapter()));
 
         $repositoryFromServer = new Repository(
             $this->getSettings(),
@@ -208,7 +208,7 @@ class RepositoryTest extends TestCase
         ));
         $httpClient->addResponse(new Response(304, ["ETag" => "And that's all she wrote!"]));
 
-        $storage = new Storage($this->getSettings()->getAppName(), new Filesystem(new NullAdapter()));
+        $storage = new BackupStorage($this->getSettings()->getAppName(), new Filesystem(new NullAdapter()));
         $repository = new Repository($this->getSettings(0), $storage, $httpClient);
 
         $repository->fetch();
@@ -226,7 +226,7 @@ class RepositoryTest extends TestCase
 
         $httpClient->addResponse(new Response(200, [], Json::encode($featuresData)));
 
-        $storage = new Storage($this->getSettings()->getAppName(), new Filesystem(new NullAdapter()));
+        $storage = new BackupStorage($this->getSettings()->getAppName(), new Filesystem(new NullAdapter()));
 
         $repository = new Repository(
             $this->getSettings(0),
@@ -245,7 +245,7 @@ class RepositoryTest extends TestCase
         $httpClient = new Client();
         $httpClient->addResponse(new Response(500));
 
-        $storage = new Storage($this->getSettings()->getAppName(), new Filesystem(new NullAdapter()));
+        $storage = new BackupStorage($this->getSettings()->getAppName(), new Filesystem(new NullAdapter()));
 
         $repository = new Repository(
             $this->getSettings(),
@@ -268,7 +268,7 @@ class RepositoryTest extends TestCase
 
         $repositoryFromServer = new Repository(
             $this->getSettings(),
-            new Storage($this->getSettings()->getAppName(), $memoryFilesystem),
+            new BackupStorage($this->getSettings()->getAppName(), $memoryFilesystem),
             $httpClient
         );
         $repositoryFromServer->fetch();
@@ -279,7 +279,7 @@ class RepositoryTest extends TestCase
 
         $staleRepository = new Repository(
             $this->getSettings(0),
-            new Storage($this->getSettings()->getAppName(), $memoryFilesystem),
+            new BackupStorage($this->getSettings()->getAppName(), $memoryFilesystem),
             $httpClient
         );
 
