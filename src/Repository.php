@@ -47,6 +47,13 @@ class Repository
             return;
         }
 
+        // TODO: improbable but possible: Another client has updated the cache since the current client fetched.
+        // TODO: a solution to this (if we really want to avoid another call to the server)
+        // TODO: would be to re-fetch and check what's currently stored in the cache.
+        // TODO: This should not be a problem for regular short-lived request-response processes.
+        // TODO: Long-running processes however are more likely to encounter this issue.
+        // TODO: If long running processes become a common thing we should reconsider adding the cache reload solution.
+
         if ($this->isUpdateLocked()) {
             return;
         }
