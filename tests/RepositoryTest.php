@@ -67,7 +67,7 @@ class RepositoryTest extends TestCase
         $repository = new Repository($this->getSettings(0), $httpClient, $storage);
 
         $repository->fetch();
-        // Second pass. Since updateInterval is zero (0) the storage should immediately be considered stale.
+        // Second pass. Since maxAge is zero (0) the storage should immediately be considered stale.
         $repository->fetch();
 
         $requests = $httpClient->getRequests();
@@ -256,8 +256,8 @@ class RepositoryTest extends TestCase
         ];
     }
 
-    private function getSettings($updateInterval = Settings::DEFAULT_UPDATE_INTERVAL_SECONDS)
+    private function getSettings($dataMaxAge = Settings::DEFAULT_MAX_AGE_SECONDS)
     {
-        return new Settings("Test", "Test:Id", "localhost", $updateInterval);
+        return new Settings("Test", "Test:Id", "localhost", $dataMaxAge);
     }
 }

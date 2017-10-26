@@ -22,7 +22,7 @@ class SettingsTest extends TestCase
         $settings = new Settings("name", "instance");
 
 
-        $this->assertEquals(Settings::DEFAULT_UPDATE_INTERVAL_SECONDS, $settings->getUpdateInterval());
+        $this->assertEquals(Settings::DEFAULT_MAX_AGE_SECONDS, $settings->getDataMaxAge());
         $this->assertEquals("http://localhost:4242", $settings->getUnleashHost());
     }
 

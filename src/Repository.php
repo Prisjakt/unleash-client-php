@@ -141,7 +141,7 @@ class Repository
 
     private function isStorageFresh(): bool
     {
-        return $this->storage->getLastUpdated() > (time() - $this->settings->getUpdateInterval());
+        return $this->storage->getLastUpdated() > (time() - $this->settings->getDataMaxAge());
     }
 
     private function ignoreOrFail()

@@ -67,7 +67,7 @@ class Unleash
                 "instanceId" => $this->settings->getInstanceId(),
                 "strategies" => $implementedStrategies,
                 "started" => time(),
-                "interval" => $this->settings->getUpdateInterval(),
+                "interval" => $this->settings->getDataMaxAge(),
             ])
         );
 

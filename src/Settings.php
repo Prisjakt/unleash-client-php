@@ -4,24 +4,24 @@ namespace Prisjakt\Unleash;
 
 class Settings
 {
-    const DEFAULT_UPDATE_INTERVAL_SECONDS = 15;
+    const DEFAULT_MAX_AGE_SECONDS = 15;
 
     private $appName;
     private $instanceId;
     private $unleashHost;
-    private $updateInterval;
+    private $dataMaxAge;
 
     public function __construct(
         string $appName,
         string $instanceId,
         string $unleashHost = "http://localhost:4242",
-        int $updateInterval = self::DEFAULT_UPDATE_INTERVAL_SECONDS
+        int $dataMaxAge = self::DEFAULT_MAX_AGE_SECONDS
     ) {
 
         $this->appName = $appName;
         $this->instanceId = $instanceId;
         $this->unleashHost = $this->stripTrailingSlashes($unleashHost);
-        $this->updateInterval = $updateInterval;
+        $this->dataMaxAge = $dataMaxAge;
     }
 
     public function getAppName(): string
@@ -39,9 +39,9 @@ class Settings
         return $this->unleashHost;
     }
 
-    public function getUpdateInterval(): int
+    public function getDataMaxAge(): int
     {
-        return $this->updateInterval;
+        return $this->dataMaxAge;
     }
 
     private function stripTrailingSlashes(string $url): string
