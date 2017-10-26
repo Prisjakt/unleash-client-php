@@ -11,6 +11,7 @@ class Settings
     private $unleashHost;
     private $dataMaxAge;
     private $registerOnInstantiation;
+    private $refreshFromServerIfStale;
 
     public function __construct(
         string $appName,
@@ -24,6 +25,7 @@ class Settings
         $this->unleashHost = $this->stripTrailingSlashes($unleashHost);
         $this->dataMaxAge = $dataMaxAge;
         $this->registerOnInstantiation = false;
+        $this->refreshFromServerIfStale = true;
     }
 
     public function getAppName(): string
@@ -54,6 +56,16 @@ class Settings
     public function setRegisterOnInstantiation(bool $value)
     {
         $this->registerOnInstantiation = $value;
+    }
+
+    public function shouldRefreshFromServerIfStale(): bool
+    {
+        return $this->refreshFromServerIfStale;
+    }
+
+    public function setRefreshFromServerIfStale(bool $refreshFromServerIfStale)
+    {
+        $this->refreshFromServerIfStale = $refreshFromServerIfStale;
     }
 
     private function stripTrailingSlashes(string $url): string

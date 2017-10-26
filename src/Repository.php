@@ -24,11 +24,17 @@ class Repository
     // TODO: move scalars to settings object?
     public function __construct(
         Settings $settings,
-        HttpClient $httpClient,
         Storage $storage,
+        HttpClient $httpClient = null,
         CacheItemPoolInterface $cachePool = null
     ) {
         $this->settings = $settings;
+
+        if ($httpClient === null && $settings->shouldRefreshFromServerIfStale()) {
+            throw new \InvalidArgumentException(
+                "Settings specify that server should be used for refreshing data but no httpClient has been passed"
+            );
+        }
         $this->httpClient = $httpClient;
         $this->storage = $storage;
 
@@ -53,6 +59,13 @@ class Repository
         // TODO: This should not be a problem for regular short-lived request-response processes.
         // TODO: Long-running processes however are more likely to encounter this issue.
         // TODO: If long running processes become a common thing we should reconsider adding the cache reload solution.
+
+        if (!$this->settings->shouldRefreshFromServerIfStale()) {
+            if (!$this->storage->hasData()) {
+                throw new \Exception("No data in cache and server refresh is disabled");
+            }
+            return;
+        }
 
         if ($this->isUpdateLocked()) {
             return;

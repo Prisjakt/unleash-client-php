@@ -15,9 +15,16 @@ use Prisjakt\Unleash\Repository;
 use Prisjakt\Unleash\Settings;
 use Prisjakt\Unleash\Storage;
 
-// TODO: should probably move the first repository in two-stage tests to a helper function.
 class RepositoryTest extends TestCase
 {
+    public function testTryingToUseServerFetchWithoutHttpClientThrows()
+    {
+        $storage = new Storage($this->getSettings()->getAppName(), new Filesystem(new NullAdapter()));
+
+        $this->expectException(\InvalidArgumentException::class);
+        new Repository($this->getSettings(), $storage);
+    }
+
     public function testFetchDataFromServer()
     {
         $featuresData = $this->getFeaturesData();
@@ -27,7 +34,7 @@ class RepositoryTest extends TestCase
 
         $storage = new Storage($this->getSettings()->getAppName(), new Filesystem(new NullAdapter()));
 
-        $repository = new Repository($this->getSettings(), $httpClient, $storage);
+        $repository = new Repository($this->getSettings(), $storage, $httpClient);
 
         $repository->fetch();
 
@@ -44,7 +51,7 @@ class RepositoryTest extends TestCase
 
         $storage = new Storage($this->getSettings()->getAppName(), new Filesystem(new NullAdapter()));
 
-        $repository = new Repository($this->getSettings(), $httpClient, $storage);
+        $repository = new Repository($this->getSettings(), $storage, $httpClient);
 
         $repository->fetch();
         // Second pass. We should use cache now instead of asking the server.
@@ -64,7 +71,7 @@ class RepositoryTest extends TestCase
 
         $storage = new Storage($this->getSettings()->getAppName(), new Filesystem(new NullAdapter()));
 
-        $repository = new Repository($this->getSettings(0), $httpClient, $storage);
+        $repository = new Repository($this->getSettings(0), $storage, $httpClient);
 
         $repository->fetch();
         // Second pass. Since maxAge is zero (0) the storage should immediately be considered stale.
@@ -85,15 +92,15 @@ class RepositoryTest extends TestCase
 
         $repositoryFromServer = new Repository(
             $this->getSettings(),
-            $httpClient,
-            new Storage($this->getSettings()->getAppName(), $memoryFilesystem)
+            new Storage($this->getSettings()->getAppName(), $memoryFilesystem),
+            $httpClient
         );
         $repositoryFromServer->fetch();
 
         $repositoryFromStorage = new Repository(
             $this->getSettings(0),
-            $httpClient,
-            new Storage($this->getSettings()->getAppName(), $memoryFilesystem)
+            new Storage($this->getSettings()->getAppName(), $memoryFilesystem),
+            $httpClient
         );
         $httpClient->addException(new \Exception("Server is down or something..."));
         $repositoryFromStorage->fetch();
@@ -103,6 +110,53 @@ class RepositoryTest extends TestCase
         $this->assertEquals(2, count($requests));
         // we should still have data from cache/backup in the new instance.
         $this->assertTrue($repositoryFromStorage->has("feature1"));
+    }
+
+    public function testUseStaleStorageIfServerRefreshIsDisabled()
+    {
+        $featuresData = $this->getFeaturesData();
+
+        $httpClient = new Client();
+        $httpClient->addResponse(new Response(200, [], Json::encode($featuresData)));
+
+        $memoryFilesystem = new Filesystem(new MemoryAdapter());
+
+        $repositoryFromServer = new Repository(
+            $this->getSettings(),
+            new Storage($this->getSettings()->getAppName(), $memoryFilesystem),
+            $httpClient
+        );
+        $repositoryFromServer->fetch();
+
+        $settings2 = $this->getSettings(0);
+        $settings2->setRefreshFromServerIfStale(false);
+        $repositoryFromStorage = new Repository(
+            $settings2,
+            new Storage($this->getSettings()->getAppName(), $memoryFilesystem),
+            $httpClient
+        );
+        $httpClient->addException(new \Exception("Server is down or something..."));
+        $repositoryFromStorage->fetch();
+
+        $requests = $httpClient->getRequests();
+        // since the second instance does not use server we should only have one request.
+        $this->assertEquals(1, count($requests));
+        // thus we should use the stored data instead, even if it is stale.
+        $this->assertTrue($repositoryFromStorage->has("feature1"));
+    }
+
+
+    public function testDisabledServerFetchAndNoCacheThrows()
+    {
+        $settings = $this->getSettings();
+        $settings->setRefreshFromServerIfStale(false);
+        $repositoryFromStorage = new Repository(
+            $settings,
+            new Storage($this->getSettings()->getAppName(), new Filesystem(new NullAdapter()))
+        );
+
+        $this->expectException(\Exception::class);
+        $repositoryFromStorage->fetch();
     }
 
     public function testLockedUpdateUsesStaleStorage()
@@ -116,8 +170,8 @@ class RepositoryTest extends TestCase
 
         $repositoryFromServer = new Repository(
             $this->getSettings(),
-            $httpClient,
-            $storage
+            $storage,
+            $httpClient
         );
         $repositoryFromServer->fetch();
 
@@ -129,8 +183,8 @@ class RepositoryTest extends TestCase
 
         $staleRepository = new Repository(
             $this->getSettings(0),
-            $httpClient,
             $storage,
+            $httpClient,
             $cachePool
         );
         $staleRepository->fetch();
@@ -155,7 +209,7 @@ class RepositoryTest extends TestCase
         $httpClient->addResponse(new Response(304, ["ETag" => "And that's all she wrote!"]));
 
         $storage = new Storage($this->getSettings()->getAppName(), new Filesystem(new NullAdapter()));
-        $repository = new Repository($this->getSettings(0), $httpClient, $storage);
+        $repository = new Repository($this->getSettings(0), $storage, $httpClient);
 
         $repository->fetch();
         $repository->fetch();
@@ -176,8 +230,8 @@ class RepositoryTest extends TestCase
 
         $repository = new Repository(
             $this->getSettings(0),
-            $httpClient,
             $storage,
+            $httpClient,
             $cachePool
         );
 
@@ -195,8 +249,8 @@ class RepositoryTest extends TestCase
 
         $repository = new Repository(
             $this->getSettings(),
-            $httpClient,
-            $storage
+            $storage,
+            $httpClient
         );
 
         $this->expectException(\Exception::class);
@@ -214,8 +268,8 @@ class RepositoryTest extends TestCase
 
         $repositoryFromServer = new Repository(
             $this->getSettings(),
-            $httpClient,
-            new Storage($this->getSettings()->getAppName(), $memoryFilesystem)
+            new Storage($this->getSettings()->getAppName(), $memoryFilesystem),
+            $httpClient
         );
         $repositoryFromServer->fetch();
 
@@ -225,8 +279,8 @@ class RepositoryTest extends TestCase
 
         $staleRepository = new Repository(
             $this->getSettings(0),
-            $httpClient,
-            new Storage($this->getSettings()->getAppName(), $memoryFilesystem)
+            new Storage($this->getSettings()->getAppName(), $memoryFilesystem),
+            $httpClient
         );
 
         $staleRepository->fetch();

@@ -35,8 +35,8 @@ class Unleash
 
         $this->repository = new Repository(
             $settings,
-            $httpClient,
             new Storage($settings->getAppName(), $filesystem, $cacheItemPool),
+            $httpClient,
             $cacheItemPool
         );
 
