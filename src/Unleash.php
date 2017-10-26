@@ -40,7 +40,9 @@ class Unleash
             $cacheItemPool
         );
 
-        $this->register($strategyRepository->getNames());
+        if ($this->settings->getRegisterOnInstantiation()) {
+            $this->register($strategyRepository->getNames());
+        }
     }
 
     public function isEnabled(string $key, array $context = [], bool $default = false): bool
@@ -56,7 +58,7 @@ class Unleash
         return $this->featureProcessor->process($feature, $context, $default);
     }
 
-    private function register(array $implementedStrategies)
+    public function register(array $implementedStrategies)
     {
         $request = new Request(
             "post",

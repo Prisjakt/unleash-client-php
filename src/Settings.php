@@ -10,6 +10,7 @@ class Settings
     private $instanceId;
     private $unleashHost;
     private $dataMaxAge;
+    private $registerOnInstantiation;
 
     public function __construct(
         string $appName,
@@ -22,6 +23,7 @@ class Settings
         $this->instanceId = $instanceId;
         $this->unleashHost = $this->stripTrailingSlashes($unleashHost);
         $this->dataMaxAge = $dataMaxAge;
+        $this->registerOnInstantiation = false;
     }
 
     public function getAppName(): string
@@ -42,6 +44,16 @@ class Settings
     public function getDataMaxAge(): int
     {
         return $this->dataMaxAge;
+    }
+
+    public function getRegisterOnInstantiation(): bool
+    {
+        return $this->registerOnInstantiation;
+    }
+
+    public function setRegisterOnInstantiation(bool $value)
+    {
+        $this->registerOnInstantiation = $value;
     }
 
     private function stripTrailingSlashes(string $url): string

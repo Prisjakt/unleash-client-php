@@ -15,7 +15,7 @@ use Prophecy\Argument\Token\AnyValueToken;
 
 class UnleashTest extends TestCase
 {
-    public function testClientRegistersOnInstantiation()
+    public function testClientRespectsInstantiationRegisterSetting()
     {
         $settings = new Settings("appName", "instanceId");
         $strategies = [];
@@ -25,12 +25,17 @@ class UnleashTest extends TestCase
         new Unleash($settings, $strategies, $httpClient, $filesystem);
 
         // TODO: probably a bit too basic. Check request headers,content too.
+        $this->assertEquals(0, count($httpClient->getRequests()));
+
+        $settings->setRegisterOnInstantiation(true);
+        new Unleash($settings, $strategies, $httpClient, $filesystem);
         $this->assertEquals(1, count($httpClient->getRequests()));
     }
 
     public function testClientRegisterIgnoresNetworkError()
     {
         $settings = new Settings("appName", "instanceId");
+        $settings->setRegisterOnInstantiation(true);
         $strategies = [];
         $httpClient = new Client();
         $filesystem = new Filesystem(new NullAdapter());
@@ -54,7 +59,6 @@ class UnleashTest extends TestCase
         $filesystem = new Filesystem(new NullAdapter());
         $featuresData = $this->getFeaturesData();
 
-        $httpClient->addResponse(new Response()); // register request response
         $httpClient->addResponse(new Response(200, [], Json::encode($featuresData)));
 
         $unleash = new Unleash($settings, $strategies, $httpClient, $filesystem);
