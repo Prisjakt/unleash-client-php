@@ -29,5 +29,4 @@ class GradualRolloutUserIdStrategyTest extends TestCase
 
         $this->assertTrue($strategy->isEnabled($parameters, $context));
     }
-
 }

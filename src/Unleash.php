@@ -84,7 +84,7 @@ class Unleash
         try {
             $this->httpClient->sendRequest($request);
         } catch (\Exception $e) {
-            // TODO: We should really catch more specific exceptions but yeah.. every adapter throws different exceptions.
+            // TODO: We should really catch more specific exceptions but every adapter throws different exceptions.
         }
     }
 }
