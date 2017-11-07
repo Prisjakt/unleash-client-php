@@ -70,6 +70,6 @@ class Settings
 
     private function stripTrailingSlashes(string $url): string
     {
-        return preg_replace("%/+$%", "", $url);
+        return rtrim($url, "/");
     }
 }
