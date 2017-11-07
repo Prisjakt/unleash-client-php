@@ -8,7 +8,7 @@ use League\Flysystem\FilesystemInterface;
 use Prisjakt\Unleash\Feature\Processor;
 use Prisjakt\Unleash\Helpers\Json;
 use Prisjakt\Unleash\Strategy;
-use Psr\Cache\CacheItemPoolInterface;
+use Prisjakt\Unleash\Cache\CacheInterface;
 use Prisjakt\Unleash\Storage\BackupStorage;
 use Prisjakt\Unleash\Storage\CachedStorage;
 
@@ -27,7 +27,7 @@ class Unleash
         array $strategies,
         HttpClient $httpClient,
         FilesystemInterface $filesystem = null,
-        CacheItemPoolInterface $cacheItemPool = null
+        CacheInterface $cache = null
     ) {
         $this->settings = $settings;
         $this->httpClient = $httpClient;
@@ -37,15 +37,15 @@ class Unleash
 
         $storage = new BackupStorage($settings->getAppName(), $filesystem);
 
-        if ($cacheItemPool !== null) {
-            $storage = new CachedStorage($settings->getAppName(), $cacheItemPool, $storage);
+        if ($cache !== null) {
+            $storage = new CachedStorage($settings->getAppName(), $cache, $storage);
         }
 
         $this->repository = new Repository(
             $settings,
             $storage,
             $httpClient,
-            $cacheItemPool
+            $cache
         );
 
         if ($this->settings->getRegisterOnInstantiation()) {

@@ -3,26 +3,28 @@
 namespace Prisjakt\Unleash\Tests\Metrics;
 
 use PHPUnit\Framework\TestCase;
-use Prisjakt\Unleash\Metrics\Memcached;
+use Prisjakt\Unleash\Cache;
+use Prisjakt\Unleash\Metrics;
 
 class MemcachedTest extends TestCase
 {
-    private $ttl = 1;
+    private $ttl = 3;
 
     public function testWithTextProtocol()
     {
         $appName = uniqid("unleash_memcached_metrics_test");
         $memcache = $this->getMemcachedInstance();
 
-        $metrics = new Memcached($appName, $appName, $memcache, $this->ttl);
+        $cache = new Cache\Memcached($memcache);
+        $metrics = new Metrics\Memcached($appName, $appName, $cache, $this->ttl);
 
         $feature = "lemon";
         $metrics->add($feature, true);
         $metrics->add($feature, true);
         $metrics->add($feature, false);
 
-        $cacheKeyYes = "unleash-metrics-v1::{$appName}--{$appName}-FEAT--{$feature}--yes";
-        $cacheKeyNo = "unleash-metrics-v1::{$appName}--{$appName}-FEAT--{$feature}--no";
+        $cacheKeyYes = "unleash-metrics-v1__{$appName}--{$appName}-FEAT--{$feature}--yes";
+        $cacheKeyNo = "unleash-metrics-v1__{$appName}--{$appName}-FEAT--{$feature}--no";
         $this->assertFalse($memcache->get($cacheKeyYes));
         $this->assertFalse($memcache->get($cacheKeyNo));
         $metrics->report();
@@ -40,15 +42,16 @@ class MemcachedTest extends TestCase
         $memcache = $this->getMemcachedInstance();
         $memcache->setOption(\Memcached::OPT_BINARY_PROTOCOL, 1);
 
-        $metrics = new Memcached($appName, $appName, $memcache, $this->ttl);
+        $cache = new Cache\Memcached($memcache);
+        $metrics = new Metrics\Memcached($appName, $appName, $cache, $this->ttl);
 
         $feature = "lemon";
         $metrics->add($feature, true);
         $metrics->add($feature, true);
         $metrics->add($feature, false);
 
-        $cacheKeyYes = "unleash-metrics-v1::{$appName}--{$appName}-FEAT--{$feature}--yes";
-        $cacheKeyNo = "unleash-metrics-v1::{$appName}--{$appName}-FEAT--{$feature}--no";
+        $cacheKeyYes = "unleash-metrics-v1__{$appName}--{$appName}-FEAT--{$feature}--yes";
+        $cacheKeyNo = "unleash-metrics-v1__{$appName}--{$appName}-FEAT--{$feature}--no";
         $this->assertFalse($memcache->get($cacheKeyYes));
         $this->assertFalse($memcache->get($cacheKeyNo));
         $metrics->report();
@@ -65,12 +68,13 @@ class MemcachedTest extends TestCase
         $appName = uniqid("unleash_memcached_metrics_test");
         $memcache = $this->getMemcachedInstance();
 
-        $metrics = new Memcached($appName, $appName, $memcache, $this->ttl);
+        $cache = new Cache\Memcached($memcache);
+        $metrics = new Metrics\Memcached($appName, $appName, $cache, $this->ttl);
 
         $feature = "lemon";
         $metrics->add($feature, true);
 
-        $cacheKeyYes = "unleash-metrics-v1::{$appName}--{$appName}-FEAT--{$feature}--yes";
+        $cacheKeyYes = "unleash-metrics-v1__{$appName}--{$appName}-FEAT--{$feature}--yes";
         $this->assertFalse($memcache->get($cacheKeyYes));
 
         unset($metrics);

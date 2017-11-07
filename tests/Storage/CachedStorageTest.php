@@ -7,6 +7,7 @@ use League\Flysystem\Adapter\NullAdapter;
 use League\Flysystem\Filesystem;
 use League\Flysystem\Memory\MemoryAdapter;
 use PHPUnit\Framework\TestCase;
+use Prisjakt\Unleash\Cache\Memcached;
 use Prisjakt\Unleash\Feature\Feature;
 use Prisjakt\Unleash\Storage\BackupStorage;
 use Prisjakt\Unleash\Storage\CachedStorage;
@@ -18,7 +19,7 @@ class CachedStorageTest extends TestCase
     public function testCachedStorageProxiesBackupStorage()
     {
         $backupStorage = new BackupStorage($this->appName, new Filesystem(new NullAdapter()));
-        $cachedStorage = new CachedStorage($this->appName, new ArrayCachePool(), $backupStorage);
+        $cachedStorage = new CachedStorage($this->appName, $this->getCache(), $backupStorage);
 
         $cachedStorage->reset($this->getFeaturesData(), "some random string acting as etag");
 
@@ -40,10 +41,10 @@ class CachedStorageTest extends TestCase
     public function testSaveCachedSavesBackupToo()
     {
         $filesystem = new Filesystem(new MemoryAdapter());
-        $cachePool = new ArrayCachePool();
+        $cache = $this->getCache();
 
         $backupStorage = new BackupStorage($this->appName, $filesystem);
-        $cachedStorage = new CachedStorage($this->appName, $cachePool, $backupStorage);
+        $cachedStorage = new CachedStorage($this->appName, $cache, $backupStorage);
         $cachedStorage->reset($this->getFeaturesData(), "some random string acting as etag");
         $cachedStorage->save();
 
@@ -56,7 +57,7 @@ class CachedStorageTest extends TestCase
     public function testLoadFromBackupIfCacheIsEmpty()
     {
         $filesystem = new Filesystem(new MemoryAdapter());
-        $cachePool = new ArrayCachePool();
+        $cache = $this->getCache();
 
         $backupStorage = new BackupStorage($this->appName, $filesystem);
         $backupStorage->reset($this->getFeaturesData(), "some random string acting as etag");
@@ -64,7 +65,7 @@ class CachedStorageTest extends TestCase
 
         $this->assertTrue($backupStorage->has("feature"));
 
-        $cachedStorage = new CachedStorage($this->appName, $cachePool, $backupStorage);
+        $cachedStorage = new CachedStorage($this->appName, $cache, $backupStorage);
         $cachedStorage->load();
 
         $this->assertTrue($cachedStorage->has("feature"));
@@ -74,15 +75,15 @@ class CachedStorageTest extends TestCase
     public function testLoadFromCache()
     {
         $filesystem = new Filesystem(new NullAdapter());
-        $cachePool = new ArrayCachePool();
+        $cache = $this->getCache();
 
         $backupStorage = new BackupStorage($this->appName, $filesystem);
-        $cachedStorage = new CachedStorage($this->appName, $cachePool, $backupStorage);
+        $cachedStorage = new CachedStorage($this->appName, $cache, $backupStorage);
         $cachedStorage->reset($this->getFeaturesData());
         $cachedStorage->save();
         $this->assertTrue($cachedStorage->has("feature"));
 
-        $cachedStorage2 = new CachedStorage($this->appName, $cachePool, $backupStorage);
+        $cachedStorage2 = new CachedStorage($this->appName, $cache, $backupStorage);
         $cachedStorage2->load();
 
         $this->assertTrue($cachedStorage2->has("feature"));
@@ -101,5 +102,23 @@ class CachedStorageTest extends TestCase
             ],
         ];
         return $data;
+    }
+
+    private function getCache()
+    {
+        if (!isset($_SERVER["PHPUNIT_MEMCACHED_HOST"])) {
+            $this->markTestSkipped("Test skipped because no memcached env vars specified");
+        }
+
+        $host = $_SERVER["PHPUNIT_MEMCACHED_HOST"];
+        $port = $_SERVER["PHPUNIT_MEMCACHED_PORT"];
+
+        $memcached = new \Memcached();
+        $result = $memcached->addServer($host, $port);
+        if (!$result) {
+            $this->markTestSkipped("Test skipped because could not add server: " . $memcached->getResultMessage());
+        }
+
+        return new Memcached($memcached);
     }
 }

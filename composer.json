@@ -4,7 +4,6 @@
     "type": "library",
 
     "require": {
-        "psr/cache": "^1.0",
         "php-http/httplug": "^1.1",
         "php-http/client-implementation": "^1.0",
         "guzzlehttp/psr7": "^1.4",
@@ -12,7 +11,6 @@
         "lastguest/murmurhash": "^2.0"
     },
     "require-dev": {
-        "cache/array-adapter": "^1.0",
         "phpunit/phpunit": "^6.3",
         "squizlabs/php_codesniffer": "^3.0",
         "php-http/mock-client": "^1.0",

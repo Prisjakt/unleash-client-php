@@ -8,6 +8,7 @@ use Http\Mock\Client;
 use League\Flysystem\Adapter\NullAdapter;
 use League\Flysystem\Filesystem;
 use PHPUnit\Framework\TestCase;
+use Prisjakt\Unleash\Cache\Memcached;
 use Prisjakt\Unleash\Helpers\Json;
 use Prisjakt\Unleash\Settings;
 use Prisjakt\Unleash\Strategy\StrategyInterface;
@@ -23,7 +24,7 @@ class UnleashTest extends TestCase
         $httpClient = new Client();
         $filesystem = new Filesystem(new NullAdapter());
 
-        new Unleash($settings, $strategies, $httpClient, $filesystem, new ArrayCachePool());
+        new Unleash($settings, $strategies, $httpClient, $filesystem, $this->getCache());
 
         // TODO: probably a bit too basic. Check request headers,content too.
         $this->assertEquals(0, count($httpClient->getRequests()));
@@ -111,5 +112,23 @@ class UnleashTest extends TestCase
 
             ],
         ];
+    }
+
+    private function getCache()
+    {
+        if (!isset($_SERVER["PHPUNIT_MEMCACHED_HOST"])) {
+            $this->markTestSkipped("Test skipped because no memcached env vars specified");
+        }
+
+        $host = $_SERVER["PHPUNIT_MEMCACHED_HOST"];
+        $port = $_SERVER["PHPUNIT_MEMCACHED_PORT"];
+
+        $memcached = new \Memcached();
+        $result = $memcached->addServer($host, $port);
+        if (!$result) {
+            $this->markTestSkipped("Test skipped because could not add server: " . $memcached->getResultMessage());
+        }
+
+        return new Memcached($memcached);
     }
 }

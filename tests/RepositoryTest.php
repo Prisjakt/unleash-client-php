@@ -2,13 +2,13 @@
 
 namespace Prisjakt\Unleash\Tests;
 
-use Cache\Adapter\PHPArray\ArrayCachePool;
 use GuzzleHttp\Psr7\Response;
 use Http\Mock\Client;
 use League\Flysystem\Adapter\NullAdapter;
 use League\Flysystem\Filesystem;
 use League\Flysystem\Memory\MemoryAdapter;
 use PHPUnit\Framework\TestCase;
+use Prisjakt\Unleash\Cache\Memcached;
 use Prisjakt\Unleash\Feature\Feature;
 use Prisjakt\Unleash\Helpers\Json;
 use Prisjakt\Unleash\Repository;
@@ -54,7 +54,7 @@ class RepositoryTest extends TestCase
         $repository = new Repository($this->getSettings(), $storage, $httpClient);
 
         $repository->fetch();
-        // Second pass. We should use cache now instead of asking the server.
+        // Second pass. We should use data in memory now instead of asking the server.
         $repository->fetch();
         $requests = $httpClient->getRequests();
 
@@ -176,16 +176,15 @@ class RepositoryTest extends TestCase
         $repositoryFromServer->fetch();
 
         $lockKey = "UPDATE_LOCK_{$this->getSettings()->getAppName()}";
-        $cachePool = new ArrayCachePool();
-        $lockItem = $cachePool->getItem($lockKey);
-        $lockItem->set(true);
-        $cachePool->save($lockItem);
+        $cache = $this->getCache();
+
+        $cache->set($lockKey, 1, 3);
 
         $staleRepository = new Repository(
             $this->getSettings(0),
             $storage,
             $httpClient,
-            $cachePool
+            $cache
         );
         $staleRepository->fetch();
 
@@ -194,6 +193,8 @@ class RepositoryTest extends TestCase
         $this->assertEquals(1, count($requests));
         // we should still have data from cache/backup in the new instance.
         $this->assertTrue($staleRepository->has("feature1"));
+
+        $cache->delete($lockKey);
     }
 
     public function testValidETagResetsLastUpdated()
@@ -221,7 +222,7 @@ class RepositoryTest extends TestCase
     public function testPassingACacheEnabledLockingUpdatesWhichWillNotDoAnythingWonky()
     {
         $featuresData = $this->getFeaturesData();
-        $cachePool = new ArrayCachePool();
+        $cache = $this->getCache();
         $httpClient = new Client();
 
         $httpClient->addResponse(new Response(200, [], Json::encode($featuresData)));
@@ -232,7 +233,7 @@ class RepositoryTest extends TestCase
             $this->getSettings(0),
             $storage,
             $httpClient,
-            $cachePool
+            $cache
         );
 
         $repository->fetch();
@@ -313,5 +314,23 @@ class RepositoryTest extends TestCase
     private function getSettings($dataMaxAge = Settings::DEFAULT_MAX_AGE_SECONDS)
     {
         return new Settings("Test", "Test:Id", "localhost", $dataMaxAge);
+    }
+
+    private function getCache(): Memcached
+    {
+        if (!isset($_SERVER["PHPUNIT_MEMCACHED_HOST"])) {
+            $this->markTestSkipped("Test skipped because no memcached env vars specified");
+        }
+
+        $host = $_SERVER["PHPUNIT_MEMCACHED_HOST"];
+        $port = $_SERVER["PHPUNIT_MEMCACHED_PORT"];
+
+        $memcached = new \Memcached();
+        $result = $memcached->addServer($host, $port);
+        if (!$result) {
+            $this->markTestSkipped("Test skipped because could not add server: " . $memcached->getResultMessage());
+        }
+
+        return new Memcached($memcached);
     }
 }

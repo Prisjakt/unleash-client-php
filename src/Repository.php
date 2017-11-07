@@ -4,10 +4,10 @@ namespace Prisjakt\Unleash;
 
 use GuzzleHttp\Psr7\Request;
 use Http\Client\HttpClient;
+use Prisjakt\Unleash\Cache\CacheInterface;
 use Prisjakt\Unleash\Feature\Feature;
 use Prisjakt\Unleash\Helpers\Json;
 use Prisjakt\Unleash\Storage\StorageInterface;
-use Psr\Cache\CacheItemPoolInterface;
 
 class Repository
 {
@@ -19,7 +19,7 @@ class Repository
     private $storage;
 
     private $useCache;
-    private $cachePool;
+    private $cache;
     private $updateLockKey;
 
     // TODO: move scalars to settings object?
@@ -27,7 +27,7 @@ class Repository
         Settings $settings,
         StorageInterface $storage,
         HttpClient $httpClient = null,
-        CacheItemPoolInterface $cachePool = null
+        CacheInterface $cache = null
     ) {
         $this->settings = $settings;
 
@@ -45,11 +45,11 @@ class Repository
         }
 
 
-        if (is_null($cachePool)) {
+        if (is_null($cache)) {
             $this->useCache = false;
         } else {
             $this->useCache = true;
-            $this->cachePool = $cachePool;
+            $this->cache = $cache;
         }
         $this->updateLockKey = "UPDATE_LOCK_{$this->settings->getAppName()}";
     }
@@ -74,11 +74,9 @@ class Repository
             return;
         }
 
-        if ($this->isUpdateLocked()) {
+        if (!$this->lockUpdates()) {
             return;
         }
-
-        $this->lockUpdates();
 
         $eTag = $this->storage->getETag() ?? "";
         $request = new Request(
@@ -131,30 +129,13 @@ class Repository
         return $this->storage->get($key);
     }
 
-    private function isUpdateLocked(): bool
-    {
-        if (!$this->useCache) {
-            return false;
-        }
-
-        $lockItem = $this->cachePool->getItem($this->updateLockKey);
-        if (!$lockItem->isHit()) {
-            return false;
-        }
-
-        return $lockItem->get() === true;
-    }
-
     private function lockUpdates()
     {
         if (!$this->useCache) {
-            return;
+            return true;
         }
 
-        $lockItem = $this->cachePool->getItem($this->updateLockKey);
-
-        $lockItem->set(true);
-        $this->cachePool->save($lockItem);
+        return $this->cache->setExclusive($this->updateLockKey, 1);
     }
 
     private function releaseUpdateLock()
@@ -163,9 +144,7 @@ class Repository
             return;
         }
 
-        if ($this->cachePool->hasItem($this->updateLockKey)) {
-            $this->cachePool->deleteItem($this->updateLockKey);
-        }
+        $this->cache->delete($this->updateLockKey);
     }
 
     private function isStorageFresh(): bool

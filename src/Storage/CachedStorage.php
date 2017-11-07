@@ -2,18 +2,18 @@
 
 namespace Prisjakt\Unleash\Storage;
 
+use Prisjakt\Unleash\Cache\CacheInterface;
 use Prisjakt\Unleash\Feature\Feature;
-use Psr\Cache\CacheItemPoolInterface;
 
 class CachedStorage implements StorageInterface
 {
-    private $cachePool;
+    private $cache;
     private $storage;
     private $saveKey;
 
-    public function __construct(string $appName, CacheItemPoolInterface $cachePool, StorageInterface $storage)
+    public function __construct(string $appName, CacheInterface $cache, StorageInterface $storage)
     {
-        $this->cachePool = $cachePool;
+        $this->cache = $cache;
         $this->storage = $storage;
         $this->saveKey = "unleash-repo-v1-" . str_replace('[/\\]', '_', $appName);
     }
@@ -35,28 +35,25 @@ class CachedStorage implements StorageInterface
 
     public function load()
     {
-        $cacheItem = $this->cachePool->getItem($this->saveKey);
-        if (!$cacheItem->isHit()) {
+        $cacheItem = $this->cache->get($this->saveKey);
+        if (is_null($cacheItem)) {
             $this->storage->load();
             return;
         }
 
-        $data = $cacheItem->get();
-        $this->storage->reset(\unserialize($data["features"]), $data["eTag"]);
-        $this->storage->resetLastUpdated($data["lastUpdated"]);
+        $this->storage->reset(\unserialize($cacheItem["features"]), $cacheItem["eTag"]);
+        $this->storage->resetLastUpdated($cacheItem["lastUpdated"]);
     }
 
     public function save()
     {
         $this->storage->save();
 
-        $cacheItem = $this->cachePool->getItem($this->saveKey);
-        $cacheItem->set([
+        $this->cache->set($this->saveKey, [
             "lastUpdated" => $this->getLastUpdated(),
             "eTag" => $this->getETag(),
             "features" => \serialize($this->getAll()),
         ]);
-        $this->cachePool->save($cacheItem);
     }
 
     public function getLastUpdated(): float
