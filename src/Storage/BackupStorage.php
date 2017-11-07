@@ -5,6 +5,7 @@ namespace Prisjakt\Unleash\Storage;
 use League\Flysystem\Adapter\Local;
 use League\Flysystem\Filesystem;
 use League\Flysystem\FilesystemInterface;
+use Prisjakt\Unleash\Exception\FileNotFoundException;
 use Prisjakt\Unleash\Exception\NoSuchFeatureException;
 use Prisjakt\Unleash\Feature\Feature;
 use Prisjakt\Unleash\Helpers\Json;
@@ -87,7 +88,7 @@ class BackupStorage implements StorageInterface
             return;
         }
         if (!$this->filesystem->has($this->saveKey)) {
-            throw new \Exception("Could not load '{$this->saveKey}' from file system");
+            throw new FileNotFoundException("Could not load '{$this->saveKey}' from file system");
         }
         $data = Json::decode($this->filesystem->read($this->saveKey), true);
 

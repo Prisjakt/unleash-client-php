@@ -5,6 +5,7 @@ namespace Prisjakt\Unleash;
 use GuzzleHttp\Psr7\Request;
 use Http\Client\HttpClient;
 use Prisjakt\Unleash\Cache\CacheInterface;
+use Prisjakt\Unleash\Exception\FileNotFoundException;
 use Prisjakt\Unleash\Feature\Feature;
 use Prisjakt\Unleash\Helpers\Json;
 use Prisjakt\Unleash\Storage\StorageInterface;
@@ -40,7 +41,7 @@ class Repository
         $this->storage = $storage;
         try {
             $this->storage->load();
-        } catch (\Exception $e) {
+        } catch (FileNotFoundException $e) {
             // pass
         }
 
