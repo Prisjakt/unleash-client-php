@@ -29,21 +29,21 @@ class Memcached implements CacheInterface
         return $result;
     }
 
-    public function set(string $key, $value, int $expiration = null)
+    public function set(string $key, $value, int $expiration = null): bool
     {
         $this->validateKey($key);
         $expiration = $expiration ?? 0;
         return $this->memcached->set($key, $value, $expiration);
     }
 
-    public function setExclusive(string $key, $value, int $expiration = null)
+    public function setExclusive(string $key, $value, int $expiration = null): bool
     {
         $this->validateKey($key);
         $expiration = $expiration ?? 0;
         return $this->memcached->add($key, $value, $expiration);
     }
 
-    public function delete(string $key)
+    public function delete(string $key): bool
     {
         $this->validateKey($key);
         return $this->memcached->delete($key);
