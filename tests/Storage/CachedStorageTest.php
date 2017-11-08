@@ -2,7 +2,6 @@
 
 namespace Prisjakt\Unleash\Tests\Storage;
 
-use Cache\Adapter\PHPArray\ArrayCachePool;
 use League\Flysystem\Adapter\NullAdapter;
 use League\Flysystem\Filesystem;
 use League\Flysystem\Memory\MemoryAdapter;
