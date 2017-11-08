@@ -107,8 +107,8 @@ class Memcached implements CacheInterface
 
     private function validateKey(string $key)
     {
-        if (preg_match("%[^a-zA-Z0-9_\.-]%", $key)) {
-            throw new CacheException("Invalid key. Permitted characters: A-Z, a-z, 0-9, _, and .");
+        if (preg_match("%[^a-zA-Z0-9_\.\-:]%", $key)) {
+            throw new CacheException("Invalid key. Permitted characters: A-Z, a-z, 0-9, _, :, and . ({$key})");
         }
     }
 }
