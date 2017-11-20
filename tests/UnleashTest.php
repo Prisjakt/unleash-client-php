@@ -2,7 +2,6 @@
 
 namespace Prisjakt\Unleash\Tests;
 
-use Cache\Adapter\PHPArray\ArrayCachePool;
 use GuzzleHttp\Psr7\Response;
 use Http\Mock\Client;
 use League\Flysystem\Adapter\NullAdapter;
@@ -10,6 +9,7 @@ use League\Flysystem\Filesystem;
 use PHPUnit\Framework\TestCase;
 use Prisjakt\Unleash\Cache\Memcached;
 use Prisjakt\Unleash\Helpers\Json;
+use Prisjakt\Unleash\Metrics;
 use Prisjakt\Unleash\Settings;
 use Prisjakt\Unleash\Strategy\StrategyInterface;
 use Prisjakt\Unleash\Unleash;
@@ -81,6 +81,54 @@ class UnleashTest extends TestCase
         // guava should return true since it's enabled and we have implemented its strategy (which always return true).
         $this->assertTrue($unleash->isEnabled("guava", [], false));
         $this->assertTrue($unleash->isEnabled("guava", [], true));
+    }
+
+    public function testWithMetrics()
+    {
+        $defaultStrategyImpl = $this->prophesize(StrategyInterface::class);
+        $defaultStrategyImpl->getName()->willReturn("default");
+        $defaultStrategyImpl->isEnabled(new AnyValueToken(), new AnyValueToken())->willReturn(true);
+
+        $settings = new Settings("appName", "instanceId");
+        $strategies = [$defaultStrategyImpl->reveal()];
+        $httpClient = new Client();
+        $filesystem = new Filesystem(new NullAdapter());
+        $featuresData = $this->getFeaturesData();
+        $metricsStorage = new Metrics\Storage\Memcached(
+            $settings->getAppName(),
+            $settings->getInstanceId(),
+            $this->getCache()
+        );
+        $metricsReporter = new Metrics\Reporter($httpClient, $settings);
+
+        $httpClient->addResponse(new Response(200, [], Json::encode($featuresData)));
+
+        $unleash = new Unleash(
+            $settings,
+            $strategies,
+            $httpClient,
+            $filesystem,
+            null,
+            $metricsStorage,
+            $metricsReporter
+        );
+
+        $featureName = "guava";
+        // guava should return true since it's enabled and we have implemented its strategy (which always return true).
+        $this->assertTrue($unleash->isEnabled($featureName, [], false));
+        $this->assertTrue($unleash->isEnabled($featureName, [], true));
+
+        $guavaMetrics = $metricsStorage->get($featureName);
+        $this->assertEquals(2, $guavaMetrics["yes"]);
+        $this->assertEquals(0, $guavaMetrics["no"]);
+
+        $numberOfRequests = count($httpClient->getRequests());
+
+        // on destruct, unleash should now report metrics (send a request)
+        $httpClient->addResponse(new Response(202));
+        unset($unleash);
+        $numberOfRequestsAfterDestruct = count($httpClient->getRequests());
+        $this->assertEquals($numberOfRequests + 1, $numberOfRequestsAfterDestruct);
     }
 
     private function getFeaturesData()

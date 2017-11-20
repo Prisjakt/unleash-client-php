@@ -5,14 +5,16 @@ namespace Prisjakt\Unleash;
 use GuzzleHttp\Psr7\Request;
 use Http\Client\HttpClient;
 use League\Flysystem\FilesystemInterface;
+use Prisjakt\Unleash\Cache\CacheInterface;
 use Prisjakt\Unleash\Feature\Processor;
 use Prisjakt\Unleash\Helpers\Json;
-use Prisjakt\Unleash\Strategy;
-use Prisjakt\Unleash\Cache\CacheInterface;
+use Prisjakt\Unleash\Metrics\Reporter;
+use Prisjakt\Unleash\Metrics\Storage\StorageInterface;
 use Prisjakt\Unleash\Storage\BackupStorage;
 use Prisjakt\Unleash\Storage\CachedStorage;
+use Prisjakt\Unleash\Strategy;
 
-// TODO: add (optional) logging? (e.g. if feature does not exist/strategy not implemented/cant connect to server)
+// TODO: add (optional) logging? (e.g. if feature does not exist, strategy not implemented, can't connect to server)
 class Unleash
 {
     const ENDPOINT_REGISTER = "/api/client/register";
@@ -21,13 +23,18 @@ class Unleash
     private $featureProcessor;
     private $repository;
     private $httpClient;
+    private $metricsStorage;
+    private $reporter;
+    private $startTime;
 
     public function __construct(
         Settings $settings,
         array $strategies,
         HttpClient $httpClient,
         FilesystemInterface $filesystem = null,
-        CacheInterface $cache = null
+        CacheInterface $cache = null,
+        StorageInterface $metricsStorage = null,
+        Reporter $reporter = null
     ) {
         $this->settings = $settings;
         $this->httpClient = $httpClient;
@@ -51,6 +58,20 @@ class Unleash
         if ($this->settings->getRegisterOnInstantiation()) {
             $this->register($strategyRepository->getNames());
         }
+        $this->metricsStorage = $metricsStorage;
+        $this->reporter = $reporter;
+        $this->startTime = time();
+    }
+
+    public function __destruct()
+    {
+        if ($this->metricsStorage && $this->reporter) {
+            $featureStats = [];
+            foreach (array_keys($this->repository->getAll()) as $feature) {
+                $featureStats[$feature] = $this->metricsStorage->get($feature, true);
+            }
+            $this->reporter->report($this->startTime, $featureStats);
+        }
     }
 
     public function isEnabled(string $key, array $context = [], bool $default = false): bool
@@ -63,7 +84,11 @@ class Unleash
 
         $feature = $this->repository->get($key);
 
-        return $this->featureProcessor->process($feature, $context, $default);
+        $result = $this->featureProcessor->process($feature, $context, $default);
+        if ($this->metricsStorage) {
+            $this->metricsStorage->add($feature->getName(), $result);
+        }
+        return $result;
     }
 
     public function register(array $implementedStrategies)
