@@ -130,6 +130,11 @@ class Repository
         return $this->storage->get($key);
     }
 
+    public function getAll()
+    {
+        return $this->storage->getAll();
+    }
+
     private function lockUpdates()
     {
         if (!$this->useCache) {

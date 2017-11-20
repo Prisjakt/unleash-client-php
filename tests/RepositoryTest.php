@@ -239,6 +239,7 @@ class RepositoryTest extends TestCase
         $repository->fetch();
         $this->assertTrue($repository->has("feature1"));
         $this->assertInstanceOf(Feature::class, $repository->get("feature1"));
+        $this->assertArrayHasKey("feature2", $repository->getAll());
     }
 
     public function testFailingToLoadFeaturesFromEverywhereThrows()
