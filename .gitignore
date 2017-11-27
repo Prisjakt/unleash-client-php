@@ -1,0 +1,20 @@
+# phpunit generated files
+build
+
+# Composer
+/vendor/
+
+# MacOS
+.DS_Store
+._.DS_Store
+._
+.AppleDouble
+
+
+# IntelliJ
+.idea
+
+# Vim
+[._]sw[a-p]
+[._]*.sw[a-p]
+*~
