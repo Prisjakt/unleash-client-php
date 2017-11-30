@@ -104,6 +104,7 @@ class Repository
             if ($this->storage->getETag() === $eTag) {
                 $this->storage->resetLastUpdated();
                 $this->storage->save();
+                $this->releaseUpdateLock();
                 return;
             }
         }
