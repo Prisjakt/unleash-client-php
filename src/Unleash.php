@@ -65,13 +65,20 @@ class Unleash
 
     public function __destruct()
     {
-        if ($this->metricsStorage && $this->reporter) {
-            $featureStats = [];
-            foreach (array_keys($this->repository->getAll()) as $feature) {
-                $featureStats[$feature] = $this->metricsStorage->get($feature, true);
-            }
-            $this->reporter->report($this->startTime, $featureStats);
+        if (!($this->metricsStorage && $this->reporter)) {
+            return;
         }
+
+        $allFeatures = $this->repository->getAll();
+        if (is_null($allFeatures)) {
+            return;
+        }
+
+        $featureStats = [];
+        foreach (array_keys($allFeatures) as $feature) {
+            $featureStats[$feature] = $this->metricsStorage->get($feature, true);
+        }
+        $this->reporter->report($this->startTime, $featureStats);
     }
 
     public function isEnabled(string $key, array $context = [], bool $default = false): bool

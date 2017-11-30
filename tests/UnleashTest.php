@@ -131,6 +131,48 @@ class UnleashTest extends TestCase
         $this->assertEquals($numberOfRequests + 1, $numberOfRequestsAfterDestruct);
     }
 
+
+    public function testWithMetricsButNoFeatures()
+    {
+        $defaultStrategyImpl = $this->prophesize(StrategyInterface::class);
+        $defaultStrategyImpl->getName()->willReturn("default");
+        $defaultStrategyImpl->isEnabled(new AnyValueToken(), new AnyValueToken())->willReturn(true);
+
+        $settings = new Settings("appName", "instanceId");
+        $strategies = [$defaultStrategyImpl->reveal()];
+        $httpClient = new Client();
+        $filesystem = new Filesystem(new NullAdapter());
+        $featuresData = [
+            "version" => 1,
+            "features" => [],
+        ];
+        $metricsStorage = new Metrics\Storage\Memcached(
+            $settings->getAppName(),
+            $settings->getInstanceId(),
+            $this->getCache()
+        );
+        $metricsReporter = new Metrics\Reporter($httpClient, $settings);
+
+        $httpClient->addResponse(new Response(200, [], Json::encode($featuresData)));
+
+        $unleash = new Unleash(
+            $settings,
+            $strategies,
+            $httpClient,
+            $filesystem,
+            null,
+            $metricsStorage,
+            $metricsReporter
+        );
+
+        $numberOfRequests = count($httpClient->getRequests());
+
+        // on destruct, unleash should not report metrics since we have no features to report.
+        unset($unleash);
+        $numberOfRequestsAfterDestruct = count($httpClient->getRequests());
+        $this->assertEquals($numberOfRequests, $numberOfRequestsAfterDestruct);
+    }
+
     private function getFeaturesData()
     {
         return [
