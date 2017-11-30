@@ -108,7 +108,7 @@ class Unleash
                 "appName" => $this->settings->getAppName(),
                 "instanceId" => $this->settings->getInstanceId(),
                 "strategies" => $implementedStrategies,
-                "started" => time(),
+                "started" => date("c"),
                 "interval" => $this->settings->getDataMaxAge(),
             ])
         );

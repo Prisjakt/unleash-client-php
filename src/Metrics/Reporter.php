@@ -31,8 +31,8 @@ class Reporter
                 "appName" => $this->settings->getAppName(),
                 "instanceId" => $this->settings->getInstanceId(),
                 "bucket" => [
-                    "start" => $startTime,
-                    "stop" => time(),
+                    "start" => date("c", $startTime),
+                    "stop" => date("c"),
                     "toggles" => $featureStats,
                 ],
             ])
