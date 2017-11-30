@@ -52,7 +52,7 @@ class Repository
             $this->useCache = true;
             $this->cache = $cache;
         }
-        $this->updateLockKey = "UPDATE_LOCK_{$this->settings->getAppName()}";
+        $this->updateLockKey = "PHP_UNLEASH_UPDATE_LOCK_{$this->settings->getAppName()}";
     }
 
     public function fetch()

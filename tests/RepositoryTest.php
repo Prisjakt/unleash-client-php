@@ -175,7 +175,7 @@ class RepositoryTest extends TestCase
         );
         $repositoryFromServer->fetch();
 
-        $lockKey = "UPDATE_LOCK_{$this->getSettings()->getAppName()}";
+        $lockKey = "PHP_UNLEASH_UPDATE_LOCK_{$this->getSettings()->getAppName()}";
         $cache = $this->getCache();
 
         $cache->set($lockKey, 1, 3);
