@@ -25,7 +25,7 @@ abstract class GradualRolloutParameterStrategy implements StrategyInterface
         $groupId = $parameters["groupId"] ?? "";
         $hashKey = "{$targetValue}:{$groupId}";
 
-        $normalizedId = Murmur::hash3_int($hashKey) % 100;
+        $normalizedId = Murmur::hash3_int($hashKey) % 100 + 1;
 
         return $percentage > 0 && $normalizedId <= $percentage;
     }

@@ -15,7 +15,7 @@ class GradualRolloutParameterStrategyTest extends TestCase
         $sessionId = "385h4389r2nr32423";
         $hashKey = "{$sessionId}:groupId";
         $parameters = [
-            "percentage" => Murmur::hash3_int($hashKey) % 100,
+            "percentage" => Murmur::hash3_int($hashKey) % 100 + 1,
             "groupId" => "groupId",
         ];
 
