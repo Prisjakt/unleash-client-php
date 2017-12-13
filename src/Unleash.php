@@ -83,7 +83,7 @@ class Unleash
 
     public function isEnabled(string $key, array $context = [], bool $default = false): bool
     {
-        $this->repository->fetch();
+        $this->fetch();
 
         if (!$this->repository->has($key)) {
             return $default;
@@ -96,6 +96,11 @@ class Unleash
             $this->metricsStorage->add($feature->getName(), $result);
         }
         return $result;
+    }
+
+    public function fetch($force = false)
+    {
+        $this->repository->fetch($force);
     }
 
     public function register(array $implementedStrategies)
