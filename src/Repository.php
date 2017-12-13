@@ -78,47 +78,46 @@ class Repository
         if (!$this->lockUpdates()) {
             return;
         }
-
-        $eTag = $this->storage->getETag() ?? "";
-        $request = new Request(
-            "get",
-            $this->settings->getUnleashHost() . self::ENDPOINT_FEATURES,
-            [
-                "If-None-Match" => $eTag,
-                "Content-Type" => "Application/Json",
-                "UNLEASH-APPNAME" => $this->settings->getAppName(),
-                "UNLEASH-INSTANCEID" => $this->settings->getInstanceId(),
-            ]
-        );
-
         try {
+            $eTag = $this->storage->getETag() ?? "";
+            $request = new Request(
+                "get",
+                $this->settings->getUnleashHost() . self::ENDPOINT_FEATURES,
+                [
+                    "If-None-Match" => $eTag,
+                    "Content-Type" => "Application/Json",
+                    "UNLEASH-APPNAME" => $this->settings->getAppName(),
+                    "UNLEASH-INSTANCEID" => $this->settings->getInstanceId(),
+                ]
+            );
+
             $response = $this->httpClient->sendRequest($request);
             $statusCode = $response->getStatusCode();
             $eTag = implode(", ", $response->getHeader("Etag"));
+
+
+            if ($statusCode === 304) {
+                if ($this->storage->getETag() === $eTag) {
+                    $this->storage->resetLastUpdated();
+                    $this->storage->save();
+                    return;
+                }
+            }
+
+            if ($statusCode < 200 || $statusCode > 299) {
+                $this->ignoreOrFail();
+                return;
+            }
+            $json = $response->getBody()->getContents();
+            $data = Json::decode($json, true);
+            $this->storage->reset($data["features"], $eTag);
+            $this->storage->save();
         } catch (\Exception $e) {
             $this->ignoreOrFail();
             return;
+        } finally {
+            $this->releaseUpdateLock();
         }
-
-        if ($statusCode === 304) {
-            if ($this->storage->getETag() === $eTag) {
-                $this->storage->resetLastUpdated();
-                $this->storage->save();
-                $this->releaseUpdateLock();
-                return;
-            }
-        }
-
-        if ($statusCode < 200 || $statusCode > 299) {
-            $this->ignoreOrFail();
-            return;
-        }
-
-        $json = $response->getBody()->getContents();
-        $data = Json::decode($json, true);
-        $this->storage->reset($data["features"], $eTag);
-        $this->storage->save();
-        $this->releaseUpdateLock();
     }
 
     public function has(string $key): bool
