@@ -55,9 +55,9 @@ class Repository
         $this->updateLockKey = "PHP_UNLEASH_UPDATE_LOCK_{$this->settings->getAppName()}";
     }
 
-    public function fetch()
+    public function fetch($force = false)
     {
-        if ($this->isStorageFresh()) {
+        if ($this->isStorageFresh() && !$force) {
             return;
         }
 
