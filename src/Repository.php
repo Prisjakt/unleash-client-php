@@ -141,7 +141,7 @@ class Repository
             return true;
         }
 
-        return $this->cache->setExclusive($this->updateLockKey, 1);
+        return $this->cache->setExclusive($this->updateLockKey, 1, 10);
     }
 
     private function releaseUpdateLock()
