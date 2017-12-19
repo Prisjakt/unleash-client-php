@@ -49,6 +49,23 @@ class ReporterTest extends TestCase
         $this->assertEquals(2, $bodyData["bucket"]["toggles"]["feature3"]["yes"]);
     }
 
+    public function testReportNoDataWorks()
+    {
+        $httpClient = new Client();
+        $httpClient->addResponse(new Response(202));
+        $settings = $this->getSettings();
+
+        $reporter = new Reporter($httpClient, $settings);
+
+        $reportData = [];
+
+        $this->assertTrue($reporter->report(time(), $reportData));
+
+        $requests = $httpClient->getRequests();
+
+        $this->assertEmpty($requests);
+    }
+
     public function testErrorResponseThrows()
     {
         $httpClient = new Client();

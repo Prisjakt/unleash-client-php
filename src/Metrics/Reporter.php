@@ -24,7 +24,7 @@ class Reporter
     public function report(int $startTime, array $featureStats)
     {
         if (empty($featureStats)) {
-            return;
+            return true;
         }
 
         $request = new Request(
