@@ -23,6 +23,10 @@ class Reporter
 
     public function report(int $startTime, array $featureStats)
     {
+        if (empty($featureStats)) {
+            return;
+        }
+
         $request = new Request(
             "post",
             $this->settings->getUnleashHost() . self::ENDPOINT_METRICS,

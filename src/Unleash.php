@@ -70,7 +70,7 @@ class Unleash
         }
 
         $allFeatures = $this->repository->getAll();
-        if (is_null($allFeatures)) {
+        if (is_null($allFeatures) || empty($allFeatures)) {
             return;
         }
 
