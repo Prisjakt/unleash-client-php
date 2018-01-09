@@ -109,6 +109,7 @@ class UnleashTest extends TestCase
             $httpClient,
             $filesystem,
             null,
+            null,
             $metricsStorage,
             $metricsReporter
         );
@@ -161,9 +162,11 @@ class UnleashTest extends TestCase
             $httpClient,
             $filesystem,
             null,
+            null,
             $metricsStorage,
             $metricsReporter
         );
+        $unleash->fetch();
 
         $numberOfRequests = count($httpClient->getRequests());
 

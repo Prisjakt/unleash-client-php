@@ -8,10 +8,11 @@ use League\Flysystem\FilesystemInterface;
 use Prisjakt\Unleash\Cache\CacheInterface;
 use Prisjakt\Unleash\Feature\Processor;
 use Prisjakt\Unleash\Helpers\Json;
+use Prisjakt\Unleash\LoaderStrategy\Awareness\ContextAware;
+use Prisjakt\Unleash\LoaderStrategy\DefaultLoader;
+use Prisjakt\Unleash\LoaderStrategy\LoaderStrategyInterface;
 use Prisjakt\Unleash\Metrics\Reporter;
 use Prisjakt\Unleash\Metrics\Storage\StorageInterface;
-use Prisjakt\Unleash\Storage\BackupStorage;
-use Prisjakt\Unleash\Storage\CachedStorage;
 use Prisjakt\Unleash\Strategy;
 
 // TODO: add (optional) logging? (e.g. if feature does not exist, strategy not implemented, can't connect to server)
@@ -21,11 +22,16 @@ class Unleash
 
     private $settings;
     private $featureProcessor;
-    private $repository;
     private $httpClient;
     private $metricsStorage;
     private $reporter;
     private $startTime;
+    /** @var  LoaderStrategyInterface */
+    private $loaderStrategy;
+    private $cache;
+    private $filesystem;
+    private $dataStorage;
+    private $dataBackend;
 
     public function __construct(
         Settings $settings,
@@ -33,43 +39,42 @@ class Unleash
         HttpClient $httpClient,
         FilesystemInterface $filesystem = null,
         CacheInterface $cache = null,
+        LoaderStrategyInterface $loaderStrategy = null,
         StorageInterface $metricsStorage = null,
         Reporter $reporter = null
     ) {
         $this->settings = $settings;
+
         $this->httpClient = $httpClient;
+        $this->cache = $cache;
+        $this->filesystem = $filesystem;
+
+        $this->metricsStorage = $metricsStorage;
+        $this->reporter = $reporter;
+
+        $this->initLoaderStrategy($loaderStrategy);
+        $this->dataBackend = (new Backend())
+            ->setHttp($this->settings, $this->httpClient)
+            ->setCache($this->cache)
+            ->setBackup($this->filesystem);
+
+        $this->startTime = time();
 
         $strategyRepository = new Strategy\Repository($strategies);
         $this->featureProcessor = new Processor($strategyRepository);
 
-        $storage = new BackupStorage($settings->getAppName(), $filesystem);
-
-        if ($cache !== null) {
-            $storage = new CachedStorage($settings->getAppName(), $cache, $storage);
-        }
-
-        $this->repository = new Repository(
-            $settings,
-            $storage,
-            $httpClient,
-            $cache
-        );
-
         if ($this->settings->getRegisterOnInstantiation()) {
             $this->register($strategyRepository->getNames());
         }
-        $this->metricsStorage = $metricsStorage;
-        $this->reporter = $reporter;
-        $this->startTime = time();
     }
 
     public function __destruct()
     {
-        if (!($this->metricsStorage && $this->reporter)) {
+        if (!($this->metricsStorage && $this->reporter && $this->dataStorage)) {
             return;
         }
 
-        $allFeatures = $this->repository->getAll();
+        $allFeatures = $this->dataStorage->getFeatures();
         if (is_null($allFeatures) || empty($allFeatures)) {
             return;
         }
@@ -85,11 +90,11 @@ class Unleash
     {
         $this->fetch();
 
-        if (!$this->repository->has($key)) {
+        if (!$this->dataStorage->has($key)) {
             return $default;
         }
 
-        $feature = $this->repository->get($key);
+        $feature = $this->dataStorage->get($key);
 
         $result = $this->featureProcessor->process($feature, $context, $default);
         if ($this->metricsStorage) {
@@ -98,9 +103,11 @@ class Unleash
         return $result;
     }
 
-    public function fetch($force = false)
+    public function fetch()
     {
-        $this->repository->fetch($force);
+        if ($this->dataStorage === null) {
+            $this->dataStorage = $this->loaderStrategy->load($this->dataBackend);
+        }
     }
 
     public function register(array $implementedStrategies)
@@ -122,6 +129,21 @@ class Unleash
             $this->httpClient->sendRequest($request);
         } catch (\Exception $e) {
             // TODO: We should really catch more specific exceptions but every adapter throws different exceptions.
+        }
+    }
+
+    private function initLoaderStrategy(LoaderStrategyInterface $loaderStrategy = null)
+    {
+        if ($loaderStrategy === null) {
+            $loaderStrategy = new DefaultLoader();
+        }
+        $this->loaderStrategy = $loaderStrategy;
+
+        if ($this->loaderStrategy instanceof ContextAware) {
+            $this->loaderStrategy->setSettings($this->settings);
+            if ($this->cache !== null) {
+                $this->loaderStrategy->setCache($this->cache);
+            }
         }
     }
 }

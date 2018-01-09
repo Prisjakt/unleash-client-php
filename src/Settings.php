@@ -58,16 +58,6 @@ class Settings
         $this->registerOnInstantiation = $value;
     }
 
-    public function shouldRefreshFromServerIfStale(): bool
-    {
-        return $this->refreshFromServerIfStale;
-    }
-
-    public function setRefreshFromServerIfStale(bool $refreshFromServerIfStale)
-    {
-        $this->refreshFromServerIfStale = $refreshFromServerIfStale;
-    }
-
     private function stripTrailingSlashes(string $url): string
     {
         return rtrim($url, "/");
