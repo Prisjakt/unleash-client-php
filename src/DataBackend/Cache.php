@@ -21,6 +21,11 @@ class Cache
         $this->ttl = $ttl;
     }
 
+    private function getKey($namespace = "")
+    {
+        return self::KEY_PREFIX . str_replace('[/\\]', '_', $namespace);
+    }
+
     /**
      * @return DataStorage|null
      */
@@ -44,10 +49,5 @@ class Cache
             return false;
         }
         return $this->cache->set($this->cacheKey, \serialize($dataStorage), $this->ttl);
-    }
-
-    private function getKey($namespace = "")
-    {
-        return self::KEY_PREFIX . str_replace('[/\\]', '_', $namespace);
     }
 }

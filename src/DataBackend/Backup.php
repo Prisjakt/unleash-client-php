@@ -8,6 +8,7 @@ use Prisjakt\Unleash\DataStorage;
 class Backup
 {
     const FILENAME = "unleash-backup-file-v1";
+    const EXTENSION = ".serialized";
 
     private $filesystem;
     private $filenameSuffix;
@@ -20,6 +21,7 @@ class Backup
 
     /**
      * @return DataStorage|null
+     * @throws \League\Flysystem\FileNotFoundException
      */
     public function load()
     {
@@ -47,7 +49,7 @@ class Backup
             return false;
         }
 
-        $path = $this->getFilePath();
+        $path = $this->getFilePath() . self::EXTENSION;
         if ($this->filesystem->has($path)) {
             return $this->filesystem->update($path, \serialize($dataStorage));
         } else {
