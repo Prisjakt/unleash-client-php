@@ -21,9 +21,9 @@ class Backend
         return $this;
     }
 
-    public function setBackup(FilesystemInterface $filesystem = null)
+    public function setBackup(FilesystemInterface $filesystem = null, $suffix = "")
     {
-        $this->backup = new Backup($filesystem);
+        $this->backup = new Backup($filesystem, $suffix);
         return $this;
     }
 
