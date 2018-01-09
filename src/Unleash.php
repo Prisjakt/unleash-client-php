@@ -103,9 +103,9 @@ class Unleash
         return $result;
     }
 
-    public function fetch()
+    public function fetch(bool $force = false)
     {
-        if ($this->dataStorage === null) {
+        if ($force || $this->dataStorage === null) {
             $this->dataStorage = $this->loaderStrategy->load($this->dataBackend);
         }
     }
