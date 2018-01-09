@@ -110,6 +110,16 @@ class Unleash
         }
     }
 
+    /**
+     * Short circuit unleash
+     * sets dataStorage to an empty dataStorage instance
+     * which will result in isEnabled calls return default for everything.
+     */
+    public function shortCircuit()
+    {
+        $this->dataStorage = new DataStorage();
+    }
+
     public function register(array $implementedStrategies)
     {
         $request = new Request(
