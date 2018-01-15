@@ -81,7 +81,13 @@ class Unleash
 
         $featureStats = [];
         foreach (array_keys($allFeatures) as $feature) {
-            $featureStats[$feature] = $this->metricsStorage->get($feature, true);
+            $stats = $this->metricsStorage->get($feature, true);
+
+            if (empty($stats) || ($stats["yes"] === 0 && $stats["no"] === 0)) {
+                continue;
+            }
+
+            $featureStats[$feature] = $stats;
         }
         $this->reporter->report($this->startTime, $featureStats);
     }
