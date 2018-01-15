@@ -25,7 +25,7 @@ class Backup
      */
     public function load()
     {
-        $path = $this->getFilePath();
+        $path = $this->getFilePath() . self::EXTENSION;
         if ($this->filesystem === null) {
             return null;
         }
