@@ -55,7 +55,7 @@ class Unleash
         $this->initLoaderStrategy($loaderStrategy);
         $this->dataBackend = (new Backend())
             ->setHttp($this->settings, $this->httpClient)
-            ->setCache($this->cache)
+            ->setCache($this->cache, $this->settings->getAppName())
             ->setBackup($this->filesystem, $this->settings->getAppName());
 
         $this->startTime = time();
