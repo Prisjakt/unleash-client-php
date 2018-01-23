@@ -32,6 +32,7 @@ class ReporterTest extends TestCase
         $storage->add("feature3", true);
         $storage->add("feature3", true);
 
+        $storage->save();
         $reportData = [];
 
         foreach (["feature1", "feature2", "feature3"] as $feature) {

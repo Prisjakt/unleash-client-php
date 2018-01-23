@@ -11,6 +11,7 @@ class Memcached implements StorageInterface
 
     private $cache;
     private $ttl;
+    private $metrics = [];
 
     public function __construct(
         string $appName,
@@ -23,10 +24,28 @@ class Memcached implements StorageInterface
         $this->cache = $cache;
     }
 
+    public function __destruct()
+    {
+        $this->save();
+    }
+
+    public function save()
+    {
+        foreach ($this->metrics as $key => $count) {
+            if ($count > 0) {
+                $this->cache->increment($key, $count, $count, $this->ttl);
+                $this->metrics[$key] = 0;
+            }
+        }
+    }
+
     public function add(string $key, bool $result)
     {
         $cacheKey = $this->getCacheKey($key, $result);
-        $this->cache->increment($cacheKey, 1, 1, $this->ttl);
+        if (!isset($this->metrics[$cacheKey])) {
+            $this->metrics[$cacheKey] = 0;
+        }
+        $this->metrics[$cacheKey]++;
     }
 
     public function get(string $feature, bool $clear = false)
