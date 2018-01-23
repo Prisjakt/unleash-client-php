@@ -17,6 +17,7 @@ class MemcachedTest extends TestCase
         $metrics = new Memcached($this->getAppName(), $this->instanceId, $cache, $this->ttl);
 
         $metrics->add("feature1", true);
+        $metrics->save();
 
         $featureStats = $metrics->get("feature1");
 
@@ -31,6 +32,7 @@ class MemcachedTest extends TestCase
         $metrics = new Memcached($this->getAppName(), $this->instanceId, $cache, $this->ttl);
 
         $metrics->add("feature1", false);
+        $metrics->save();
 
         $featureStats = $metrics->get("feature1");
 
@@ -49,6 +51,7 @@ class MemcachedTest extends TestCase
         $metrics->add("feature1", true);
         $metrics->add("feature1", false);
         $metrics->add("feature1", false);
+        $metrics->save();
 
         $featureStats = $metrics->get("feature1");
 
@@ -67,6 +70,7 @@ class MemcachedTest extends TestCase
         $metrics->add("feature2", true);
         $metrics->add("feature2", false);
         $metrics->add("feature2", false);
+        $metrics->save();
 
         $featureStats = $metrics->get("feature1");
         $this->assertEquals(1, $featureStats["yes"]);
@@ -83,6 +87,7 @@ class MemcachedTest extends TestCase
         $cache = new \Prisjakt\Unleash\Cache\Memcached($memcached);
         $metrics = new Memcached($this->getAppName(), $this->instanceId, $cache, $this->ttl);
 
+        $metrics->save();
         $featureStats = $metrics->get("feature1");
 
         $this->assertEquals(0, $featureStats["yes"]);
@@ -98,6 +103,7 @@ class MemcachedTest extends TestCase
         $metrics->add("feature1", true);
         $metrics->add("feature1", false);
         $metrics->add("feature1", false);
+        $metrics->save();
 
         $featureStats = $metrics->get("feature1", true);
 
