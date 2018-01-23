@@ -4,6 +4,7 @@ namespace Prisjakt\Unleash\LoaderStrategy;
 
 use Prisjakt\Unleash\Backend;
 use Prisjakt\Unleash\Cache\CacheInterface;
+use Prisjakt\Unleash\DataStorage;
 use Prisjakt\Unleash\Exception\NoBackendAvailableException;
 use Prisjakt\Unleash\LoaderStrategy\Awareness\CacheAware;
 use Prisjakt\Unleash\LoaderStrategy\Awareness\ContextAware;
@@ -24,7 +25,7 @@ class DefaultLoader implements LoaderStrategyInterface, ContextAware
         $this->ttl = $refreshInterval;
     }
 
-    public function load(Backend $backend)
+    public function load(Backend $backend): DataStorage
     {
         $cacheData = $backend->cache()->load();
         // we have data and it is fresh.
