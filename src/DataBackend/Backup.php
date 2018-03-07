@@ -40,7 +40,13 @@ class Backup
             return null;
         }
 
-        return \unserialize($content);
+        $data = \unserialize($content);
+
+        if ($data === false) {
+            return null;
+        }
+
+        return $data;
     }
 
     public function save(DataStorage $dataStorage): bool

@@ -40,7 +40,13 @@ class Cache
             return null;
         }
 
-        return \unserialize($cacheItem);
+        $data = \unserialize($cacheItem);
+
+        if ($data === false) {
+            return null;
+        }
+
+        return $data;
     }
 
     public function save(DataStorage $dataStorage): bool
