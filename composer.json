@@ -2,6 +2,7 @@
     "name": "prisjakt/unleash-client-php",
     "description": "PHP Client for Unleash",
     "type": "library",
+    "license": ["MIT", "Apache-2.0"],
 
     "require": {
         "php-http/httplug": "^1.1",
