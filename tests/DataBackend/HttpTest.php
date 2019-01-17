@@ -103,6 +103,4 @@ class HttpTest extends TestCase
     {
         return new Settings("Test", "Test:Id", "localhost", $dataMaxAge);
     }
-
-
 }
