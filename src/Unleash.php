@@ -30,6 +30,9 @@ class Unleash
     private $loaderStrategy;
     private $cache;
     private $filesystem;
+    /**
+     * @var DataStorage
+     */
     private $dataStorage;
     private $dataBackend;
 

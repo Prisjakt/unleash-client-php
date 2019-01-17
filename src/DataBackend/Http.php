@@ -23,7 +23,8 @@ class Http
 
     /**
      * @param DataStorage|null $old
-     * @return null|DataStorage
+     * @return DataStorage|null
+     * @throws \Http\Client\Exception
      */
     public function load(DataStorage $old = null)
     {

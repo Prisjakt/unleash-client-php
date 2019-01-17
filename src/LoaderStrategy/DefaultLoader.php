@@ -6,7 +6,6 @@ use Prisjakt\Unleash\Backend;
 use Prisjakt\Unleash\Cache\CacheInterface;
 use Prisjakt\Unleash\DataStorage;
 use Prisjakt\Unleash\Exception\NoBackendAvailableException;
-use Prisjakt\Unleash\LoaderStrategy\Awareness\CacheAware;
 use Prisjakt\Unleash\LoaderStrategy\Awareness\ContextAware;
 use Prisjakt\Unleash\Settings;
 
